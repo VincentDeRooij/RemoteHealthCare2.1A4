@@ -58,10 +58,13 @@ namespace libantplus.DataPages
     [DataPageModel(0x10)]
     public class GeneralFEData : BaseDataModel
     {
+        private byte distance;
+        public byte Distance => distance;
+
         public GeneralFEData(byte[] data)
             : base(data)
         {
-
+            this.distance = data[3];
         }
     }
 
@@ -69,6 +72,8 @@ namespace libantplus.DataPages
     [DataPageModel(0x11)]
     public class GeneralSettings : BaseDataModel
     {
+
+
         public GeneralSettings(byte[] pageData)
             : base(pageData)
         {
@@ -79,10 +84,13 @@ namespace libantplus.DataPages
     [DataPageModel(0x19)]
     public class StationaryBikeData : BaseDataModel
     {
+        private byte rpm;
+        public byte RPM => rpm;
+
         public StationaryBikeData(byte[] pageData)
             : base(pageData)
         {
-
+            this.rpm = pageData[2];
         }
     }
 }
