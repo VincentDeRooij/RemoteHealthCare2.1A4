@@ -8,27 +8,49 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RemoteHealthCare
+namespace RemoteHealthCare.Devices
 {
     public class StationaryBike : IDevice
     {
+        private BLE bluetoothLinkedDevice;
+        public BLE BluetoothLinkedDevice => bluetoothLinkedDevice;
+        public EDeviceType DeviceType => EDeviceType.StationaryBike;
+
         private StationaryBikeData lastBikeData;
         private GeneralFEData lastGeneralData;
 
-        private float distanceTravelled;
-        public float Distance => distanceTravelled;
-
-        public EDeviceType DeviceType => EDeviceType.StationaryBike;
+        private float distanceTraveled;
+        public float Distance => distanceTraveled;
 
         public event EventHandler DeviceDataChanged;
 
         public StationaryBike(string deviceName)
             : base()
         {
-            distanceTravelled = 0f;
+            distanceTraveled = 0f;
+#if !SIM
+            Task.Run(async () =>
+            {
+                await SetupDevice(deviceName);
+            }).Wait();
+#endif
         }
 
-        public void PushDataChange(byte[] data)
+        ~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
+
+        private async Task SetupDevice(string deviceName)
+        {
+            bluetoothLinkedDevice = new BLE();
+            await bluetoothLinkedDevice.OpenDevice(deviceName);
+            await bluetoothLinkedDevice.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
+            bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
+            await bluetoothLinkedDevice.SubscribeToCharacteristic("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
+        }
+
+        private void OnNotifyDataChanged(object sender, BLESubscriptionValueChangedEventArgs e) => ParseData(e.Data);
+        public void PushDataChange(byte[] data) => ParseData(data);
+
+        protected virtual void ParseData(byte[] data)
         {
             try
             {
@@ -39,8 +61,8 @@ namespace RemoteHealthCare
                     GeneralFEData generalData = (dataModel.DataPage as GeneralFEData);
                     if (generalData.Distance >= lastGeneralData.Distance)
                     {
-                        float dist = (generalData.Distance - lastGeneralData.Distance) / 1000.0f;
-                        distanceTravelled += dist < 0 ? dist * -1 : dist;
+                        float dif = (generalData.Distance - lastGeneralData.Distance) / 1000.0f;
+                        distanceTraveled += dif < 0 ? dif * -1 : dif;
                     }
                     lastGeneralData = generalData;
                 }
