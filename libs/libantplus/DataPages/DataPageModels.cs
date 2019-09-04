@@ -75,4 +75,14 @@ namespace libantplus.DataPages
 
         }
     }
+
+    [DataPageModel(0x19)]
+    public class StationaryBikeData : BaseDataModel
+    {
+        public StationaryBikeData(byte[] pageData)
+            : base(pageData)
+        {
+
+        }
+    }
 }
