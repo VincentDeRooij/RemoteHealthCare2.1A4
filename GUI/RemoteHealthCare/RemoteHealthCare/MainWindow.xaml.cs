@@ -21,14 +21,14 @@ namespace RemoteHealthCare
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void OnConnectToDevice(object sender, RoutedEventArgs e)
         {
             Windows.ConnectDevice wndConnect = new Windows.ConnectDevice();
             wndConnect.ShowDialog();

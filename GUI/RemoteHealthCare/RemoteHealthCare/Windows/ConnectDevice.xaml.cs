@@ -19,7 +19,7 @@ namespace RemoteHealthCare.Windows
     /// <summary>
     /// Interaction logic for ConnectDevice.xaml
     /// </summary>
-    public partial class ConnectDevice : Window
+    public partial class ConnectDevice
     {
         private BLE connectionLister;
         private List<string> foundConnections;
@@ -40,7 +40,11 @@ namespace RemoteHealthCare.Windows
 #if !SIM
             List<string> foundDevices = connectionLister.ListDevices();
 #else
-            List<string> foundDevices = new List<string>() { "Tacx Flux 00000", "Tacx Flux 00001", "Tacx Flux 00002", "Tacx Flux 00003", "Tacx Flux 00004" };
+            List<string> foundDevices = new List<string>();
+            for (int i = 0; i < 10; i++)
+            {
+                foundDevices.Add($"Tacx Flux {i}");
+            }
 #endif
             for (int i = 0; i < foundDevices.Count; i++)
             {

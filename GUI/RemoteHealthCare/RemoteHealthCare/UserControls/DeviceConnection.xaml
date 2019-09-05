@@ -6,8 +6,7 @@
              xmlns:local="clr-namespace:RemoteHealthCare.UserControls"
              mc:Ignorable="d"
              HorizontalAlignment="Stretch"
-             Background="Black"
-             Height="50">
+             Height="50" Padding="0" Margin="0">
     <Grid HorizontalAlignment="Left" VerticalAlignment="Center">
         <Label x:Name="lblDeviceName" Foreground="White" Content="TEST"/>
     </Grid>
