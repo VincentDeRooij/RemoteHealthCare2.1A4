@@ -17,6 +17,8 @@ namespace RemoteHealthCare.Devices
     {
         EDeviceType DeviceType { get; }
         BLE BluetoothLinkedDevice { get; }
+        string DeviceName { get; }
         void PushDataChange(byte[] data);
+        event EventHandler DeviceDataChanged;
     }
 }

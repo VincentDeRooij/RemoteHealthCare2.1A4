@@ -29,7 +29,9 @@
         </Menu>
 
         <Grid Background="{DynamicResource AppSecondColor}">
-            
+            <ScrollViewer>
+                <StackPanel Background="{DynamicResource AppPaddingColor}" x:Name="lvDevices" HorizontalAlignment="Stretch" Orientation="Vertical"/>
+            </ScrollViewer>
         </Grid>
     </DockPanel>
 </Controls:MetroWindow>

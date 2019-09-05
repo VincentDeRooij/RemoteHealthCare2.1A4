@@ -1,4 +1,5 @@
 ﻿using Avans.TI.BLE;
+using MahApps.Metro.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
-namespace RemoteHealthCare.Windows
+namespace RemoteHealthCare.Dialogs
 {
     /// <summary>
     /// Interaction logic for ConnectDevice.xaml
@@ -23,6 +25,7 @@ namespace RemoteHealthCare.Windows
     {
         private BLE connectionLister;
         private List<string> foundConnections;
+        public event EventHandler DeviceClicked;
 
         public ConnectDevice()
         {
@@ -33,6 +36,7 @@ namespace RemoteHealthCare.Windows
             timer.Interval = 50;
             timer.Elapsed += OnRefresh;
             timer.Start();
+            lbConnections.MouseDoubleClick += OnDeviceTryConnect;
         }
 
         private void OnRefresh(object sender, ElapsedEventArgs e)
@@ -40,11 +44,7 @@ namespace RemoteHealthCare.Windows
 #if !SIM
             List<string> foundDevices = connectionLister.ListDevices();
 #else
-            List<string> foundDevices = new List<string>();
-            for (int i = 0; i < 10; i++)
-            {
-                foundDevices.Add($"Tacx Flux {i}");
-            }
+            List<string> foundDevices = Simulator.Simulator.Instance.ListDevices();
 #endif
             for (int i = 0; i < foundDevices.Count; i++)
             {
@@ -58,6 +58,19 @@ namespace RemoteHealthCare.Windows
                     });
                 }
             }
+        }
+
+        private void OnDeviceTryConnect(object sender, MouseButtonEventArgs e)
+        {
+            if (lbConnections.SelectedItem != null)
+            {
+                OnDeviceClicked((lbConnections.SelectedItem as UserControls.DeviceConnection).DeviceName);
+            }
+        }
+
+        protected virtual void OnDeviceClicked(string deviceName)
+        {
+            this.DeviceClicked?.Invoke(deviceName, null);
         }
     }
 }

@@ -20,10 +20,14 @@ namespace RemoteHealthCare.UserControls
     /// </summary>
     public partial class DeviceConnection : UserControl
     {
+        private string deviceName;
+        public string DeviceName => deviceName;
+
         public DeviceConnection(string deviceName)
         {
             InitializeComponent();
             this.lblDeviceName.Content = deviceName;
+            this.deviceName = deviceName;
         }
     }
 }

@@ -22,12 +22,17 @@ namespace RemoteHealthCare.Devices
         private float distanceTraveled;
         public float Distance => distanceTraveled;
 
+        private string deviceName;
+
         public event EventHandler DeviceDataChanged;
+
+        public string DeviceName => deviceName;
 
         public StationaryBike(string deviceName)
             : base()
         {
             distanceTraveled = 0f;
+            this.deviceName = deviceName;
 #if !SIM
             Task.Run(async () =>
             {
