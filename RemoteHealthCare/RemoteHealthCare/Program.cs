@@ -39,12 +39,12 @@ namespace RemoteHealthCare
             await Task.Delay(1000);
             #endif
 
-            await AddDeviceAsync("Tacx Flux 01140", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", EDeviceType.StationaryBike);
+            //await AddDeviceAsync("Tacx Flux 01140", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", EDeviceType.StationaryBike);
             await AddDeviceAsync("Decathlon Dual HR", "HeartRate", "HeartRateMeasurement", EDeviceType.HeartRateMonitor);
 
 #endif
 
-            while (true)
+            while (false)
             {
 
                 foreach (IDevice device in connectedDevices.Values)
@@ -68,8 +68,20 @@ namespace RemoteHealthCare
         private static async Task AddDeviceAsync(string deviceName, string serviceName, string characteristic, EDeviceType deviceType)
         {
             BLE deviceService = new BLE();
+            Thread.Sleep(1000);
+            List<String> bleBikeList = deviceService.ListDevices();
+            Console.WriteLine("Devices found: ");
+            foreach (var name in bleBikeList)
+            {
+                Console.WriteLine($"Device: {name}");
+            }
             await deviceService.OpenDevice(deviceName);
+            foreach (var item in deviceService.GetServices) {
+                Console.WriteLine(item.Name);
+            }
             await deviceService.SetService(serviceName);
+            
+            
             deviceService.SubscriptionValueChanged += OnSubscriptionValueChanged;
             await deviceService.SubscribeToCharacteristic(characteristic);
 
@@ -82,6 +94,7 @@ namespace RemoteHealthCare
                 break;
 
                 case EDeviceType.HeartRateMonitor:
+                    
                 break;
             }
         }
