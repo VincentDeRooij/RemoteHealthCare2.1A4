@@ -33,7 +33,7 @@ namespace RemoteHealthCare.Dialogs
             connectionLister = new BLE();
             foundConnections = new List<string>();
             Timer timer = new Timer();
-            timer.Interval = 50;
+            timer.Interval = 1000;
             timer.Elapsed += OnRefresh;
             timer.Start();
             lbConnections.MouseDoubleClick += OnDeviceTryConnect;

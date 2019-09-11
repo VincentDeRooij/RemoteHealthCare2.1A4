@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RemoteHealthCare.Devices
@@ -15,6 +16,9 @@ namespace RemoteHealthCare.Devices
         private BLE bluetoothLinkedDevice;
         public BLE BluetoothLinkedDevice => bluetoothLinkedDevice;
         public EDeviceType DeviceType => EDeviceType.StationaryBike;
+
+        private byte rpm;
+        public byte RPM => rpm;
 
         private StationaryBikeData lastBikeData;
         private GeneralFEData lastGeneralData;
@@ -32,6 +36,7 @@ namespace RemoteHealthCare.Devices
             : base()
         {
             distanceTraveled = 0f;
+            rpm = 0;
             this.deviceName = deviceName;
 #if !SIM
             Task.Run(async () =>
@@ -42,15 +47,24 @@ namespace RemoteHealthCare.Devices
             OnDeviceDataChanged();
         }
 
-        //~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
+        ~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
 
         private async Task SetupDevice(string deviceName)
         {
             bluetoothLinkedDevice = new BLE();
+            await Task.Delay(1000);
+            bluetoothLinkedDevice.ListDevices();
             int errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+
+            var list = bluetoothLinkedDevice.GetCharacteristics;
+            foreach (var item in list)
+            {
+                Console.WriteLine(item.Name);
+            }
+
             errorCode = await bluetoothLinkedDevice.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
             bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
-            errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
+            errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("6e40fec2-b5a3-f393-e0a9-e50e24dcca9e");
         }
 
         private void OnNotifyDataChanged(object sender, BLESubscriptionValueChangedEventArgs e) => ParseData(e.Data);
@@ -78,7 +92,9 @@ namespace RemoteHealthCare.Devices
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData != null)
                 {
-                    lastBikeData = dataModel.DataPage as StationaryBikeData;
+                    StationaryBikeData dataPage = dataModel.DataPage as StationaryBikeData;
+                    this.rpm = dataPage.RPM;
+                    lastBikeData = dataPage;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData == null)
                 {

@@ -11,36 +11,40 @@
              Background="{DynamicResource AppThirdColor}"
              d:DesignHeight="450" d:DesignWidth="800" Height="300">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="8*" />
+            <ColumnDefinition Width="6*" />
         </Grid.ColumnDefinitions>
 
-        <Grid>
-            <Label x:Name="lblDistance" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+        <Grid Grid.Row="0">
+            <Label x:Name="lblDeviceName" Content="DEVNAME" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="24"/>
         </Grid>
 
-        <Grid Grid.Column="1">
-            <lvc:CartesianChart AnimationsSpeed="0:0:0.5" Hoverable="False" DataTooltip="{x:Null}">
-                <lvc:CartesianChart.Series>
-                    <lvc:LineSeries Values="{Binding ChartValues}" 
-                                PointGeometry="{x:Null}" 
-                                LineSmoothness="1"
-                                StrokeThickness="6" 
-                                Stroke="#F34336"
-                                Fill="Transparent"/>
-                </lvc:CartesianChart.Series>
-                <lvc:CartesianChart.AxisX>
-                    <lvc:Axis LabelFormatter="{Binding DateTimeFormatter}" 
-                          MaxValue="{Binding AxisMax}" 
-                          MinValue="{Binding AxisMin}"
-                          Unit="{Binding AxisUnit}">
-                        <lvc:Axis.Separator>
-                            <lvc:Separator Step="{Binding AxisStep}" />
-                        </lvc:Axis.Separator>
-                    </lvc:Axis>
-                </lvc:CartesianChart.AxisX>
-            </lvc:CartesianChart>
+        <Grid Grid.Row="0" Grid.Column="2">
+            <Button Background="Transparent" Content="&#59155;" FontFamily="Segoe MDL2 Assets" Foreground="White" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="24">
+            </Button>
+        </Grid>
+        
+        <Grid Grid.Row="1">
+            <Label x:Name="lblDistance" VerticalAlignment="Top"  HorizontalAlignment="Left" Content="4000 m" FontSize="24" Margin="5" Background="{DynamicResource AppSecondColor}"/>
+        </Grid>
+
+        <Grid Grid.Column="1" Grid.Row="1">
+            <Grid>
+                <Label Content="Instantaneous Cadence"/>
+                <lvc:AngularGauge Foreground="White" AnimationsSpeed="0:0:0.5" FromValue="0" ToValue="254" x:Name="chartRPM">
+                    <lvc:AngularGauge.Sections>
+                        <lvc:AngularSection FromValue="0" ToValue="80" Fill="Green"/>
+                        <lvc:AngularSection FromValue="80" ToValue="127" Fill="Orange"/>
+                        <lvc:AngularSection FromValue="127" ToValue="254" Fill="Red"/>
+                    </lvc:AngularGauge.Sections>
+                </lvc:AngularGauge>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

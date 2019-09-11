@@ -27,6 +27,7 @@ namespace RemoteHealthCare.Simulator
                 while (true)
                 {
                     connectedDevices.ForEach(x => x.PushDataChange(new byte[] { 0xA4, 0x09, 0x4E, 0x05, 0x10, 0x19, 0x04, (byte)rnd.Next(0, 5), 0x00, 0x00, 0xFF, 0x24, 0x30 }));
+                    connectedDevices.ForEach(x => x.PushDataChange(new byte[] { 0xA4, 0x09, 0x4E, 0x05, 0x19, 0x00, (byte)rnd.Next(1, 150), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
                     Thread.Sleep(20);
                 }
             }).Start();
