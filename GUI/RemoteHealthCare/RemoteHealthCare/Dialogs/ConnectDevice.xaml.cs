@@ -51,11 +51,14 @@ namespace RemoteHealthCare.Dialogs
                 string deviceName = foundDevices[i];
                 if (!foundConnections.Contains(deviceName))
                 {
-                    foundConnections.Add(deviceName);
-                    Dispatcher.Invoke(() =>
+                    if (deviceName.Contains("Tacx Flux"))
                     {
-                        lbConnections.Items.Add(new UserControls.DeviceConnection(deviceName));
-                    });
+                        foundConnections.Add(deviceName);
+                        Dispatcher.Invoke(() =>
+                        {
+                            lbConnections.Items.Add(new UserControls.DeviceConnection(deviceName));
+                        });
+                    }
                 }
             }
         }
