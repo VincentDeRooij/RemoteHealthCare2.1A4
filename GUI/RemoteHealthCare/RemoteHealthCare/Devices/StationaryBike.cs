@@ -39,17 +39,18 @@ namespace RemoteHealthCare.Devices
                 await SetupDevice(deviceName);
             }).Wait();
 #endif
+            OnDeviceDataChanged();
         }
 
-        ~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
+        //~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
 
         private async Task SetupDevice(string deviceName)
         {
             bluetoothLinkedDevice = new BLE();
-            await bluetoothLinkedDevice.OpenDevice(deviceName);
-            await bluetoothLinkedDevice.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
+            int errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+            errorCode = await bluetoothLinkedDevice.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
             bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
-            await bluetoothLinkedDevice.SubscribeToCharacteristic("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
+            errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
         }
 
         private void OnNotifyDataChanged(object sender, BLESubscriptionValueChangedEventArgs e) => ParseData(e.Data);

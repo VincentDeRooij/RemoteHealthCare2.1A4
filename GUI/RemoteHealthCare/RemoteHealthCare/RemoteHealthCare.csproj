@@ -55,7 +55,7 @@
       <HintPath>..\BLELibrary.dll</HintPath>
     </Reference>
     <Reference Include="ControlzEx, Version=4.0.0.0, Culture=neutral, PublicKeyToken=69f1c32f803d307e, processorArchitecture=MSIL">
-      <HintPath>..\packages\ControlzEx.4.0.1\lib\net462\ControlzEx.dll</HintPath>
+      <HintPath>..\packages\ControlzEx.4.0.3\lib\net462\ControlzEx.dll</HintPath>
     </Reference>
     <Reference Include="libantplus">
       <HintPath>..\libantplus.dll</HintPath>

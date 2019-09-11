@@ -43,7 +43,7 @@ namespace RemoteHealthCare
 #if SIM
                 IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
 #else
-                
+                IDevice selectedDevice = ((string)x).Contains("Tacx") ? new Devices.StationaryBike((string)x) : null;
 #endif
 
                 if (!devices.Contains(selectedDevice))

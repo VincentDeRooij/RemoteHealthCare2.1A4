@@ -16,7 +16,9 @@ namespace RemoteHealthCare
         public App()
             : base()
         {
+#if SIM
             Simulator.Simulator s = Simulator.Simulator.Instance;
+#endif
         }
     }
 }
