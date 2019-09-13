@@ -16,7 +16,7 @@ namespace RemoteHealthCare
     {
         private static Dictionary<BLE, IDevice> connectedDevices;
 
-        public static async Task Main(string[] args)
+        public static async Task NoMain(string[] args)
         {
             connectedDevices = new Dictionary<BLE, IDevice>();
 
