@@ -107,6 +107,19 @@ namespace TcpClient
 
         }
 
+        public string delete()
+            {
+                var delete = new
+                {
+                    id ="scene/terain/delete",
+                    data = new
+                    {
+
+                    }
+                };
+                return JsonConvert.SerializeObject(delete);
+            }
+
     }
 
 }
