@@ -76,7 +76,6 @@ namespace TcpClient
             }
         }
 
-
         private static void chooseAction(char character)
         {
             String cToLow = character.ToString().ToLower();
@@ -115,6 +114,12 @@ namespace TcpClient
                 case 'g':
                     json = encapsulatePacket(EngineInteraction.addTerrainNode());
                     break;
+                case 'i':
+                    json = encapsulatePacket(EngineInteraction.CreateRoute(50,50, 5, -5));
+                    break;
+                case 'j':
+                    json = encapsulatePacket(EngineInteraction.DebugRoute(false));
+                    break;
                 //case 'h':
                 //    json = encapsulatePacket(EngineInteraction.addRoad());
                 //    break;
@@ -141,9 +146,10 @@ namespace TcpClient
             Console.WriteLine("E: Add random height terrain");
             Console.WriteLine("F: Delete terrain");
             Console.WriteLine("G: Create terrain node");
-            //Console.WriteLine("H: ");
-            //Console.WriteLine("I: ");
-            //Console.WriteLine("J: ");
+            //Console.WriteLine("H:");
+            Console.WriteLine("I: Create route nodes");
+            Console.WriteLine("J: Debug/show current route");
+            
             //Console.WriteLine("K: ");
             //Console.WriteLine("L: ");
             //Console.WriteLine("M: ");
@@ -183,6 +189,7 @@ namespace TcpClient
 
             });
         }
+
         public static string encapsulatePacket(object json)
         {
             return JsonConvert.SerializeObject(new
@@ -197,8 +204,6 @@ namespace TcpClient
                 }
             });
         }
-
-
     }
 
     //Add your methods here
@@ -307,7 +312,6 @@ namespace TcpClient
 
         public static object addRoad(string routeUuid, double hightOffset)
         {
-
             return new
             {
                 id = "scene/terain/delete",
@@ -321,5 +325,85 @@ namespace TcpClient
                 }
             };
         }
-    }
+
+        public static object CreateRoute(int p1, int p2, int t1, int t2) 
+        {          
+            return new
+            {
+                id = "route/add",
+                data = new 
+                {
+                    nodes = new[] 
+                    {
+                        new { pos = new[] { 0,0,0 },
+                        dir = new[] { t1,0,t2 } },
+
+                        new { pos = new[] { p1,0,0 },
+                        dir = new[] { t1,0,t1 } },
+
+                        new { pos = new[] { p1,0,p2 },
+                        dir = new[] { t2,0,t1 } },
+
+                        new { pos = new[] { 0,0,p2 },
+                        dir = new[] { t2,0,t2 } }
+                    }
+                }
+            };
+        }
+
+        public static object updateRoute(int p1, int p2, int t1, int t2) 
+        {
+            return new
+            {
+                id = "route/add",
+                data = new 
+                {
+                    nodes = new[] 
+                    {
+                        new { index = 0,
+                        pos = new[] { 0,0,0 },
+                        dir = new[] { t1,0,t2 } },
+
+                        new { index = 1,
+                        pos = new[] { p1,0,0 },
+                        dir = new[] { t1,0,t1 } },
+
+                        new { index = 2,
+                        pos = new[] { p1,0,p2 },
+                        dir = new[] { t2,0,t1 } },
+
+                        new { index = 3,
+                        pos = new[] { 0,0,p2 },
+                        dir = new[] { t2,0,t2 } }
+                    }
+                }
+            };
+        }
+
+        public static object RemoveRoute(string uuid)
+        {
+            return new 
+            {
+                id = "route/delete",
+                data = new 
+                {
+                    id = uuid
+                }
+            };
+        }
+
+        public static object DebugRoute(bool show) 
+        {
+            return new 
+            {
+                id = "route/show",
+                data = new 
+                {
+                    show = show
+                }
+            };
+        }
+
+
+    }    
 }
