@@ -123,6 +123,11 @@ namespace TcpClient
                 //case 'h':
                 //    json = encapsulatePacket(EngineInteraction.addRoad());
                 //    break;
+
+                case 'k':
+                    json = encapsulatePacket(EngineInteraction.AddEbicMinecraftSteve(""));
+                    break;
+
                 default:
                     sendMessage = false;
                     Console.WriteLine("Wrong char");
@@ -149,6 +154,8 @@ namespace TcpClient
             //Console.WriteLine("H:");
             Console.WriteLine("I: Create route nodes");
             Console.WriteLine("J: Debug/show current route");
+
+            Console.WriteLine("K: Add epic minecraft steve!");
             
             //Console.WriteLine("K: ");
             //Console.WriteLine("L: ");
@@ -404,6 +411,31 @@ namespace TcpClient
             };
         }
 
-
+        public static object AddEbicMinecraftSteve(string uuid)
+        {
+            return new
+            {
+                id = "scene/node/add",
+                data = new
+                {
+                    name = "Steve",
+                    parent = "GEEN ROOT UUID WANT IK SNAP ME GOD NIET HOE IK ALLES OP MOET VRAGEN ZONDER RETURN WAARDES maar het werkt wel met Johan's code",
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { 0, 0, 0 },
+                            rotation = new[] { 0, 0, 0 },
+                            scale = 10
+                        },
+                        model = new
+                        {
+                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            cullbackfaces = false
+                        }
+                    }
+                }
+            };
+        }
     }    
 }
