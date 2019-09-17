@@ -79,6 +79,9 @@ namespace TcpClient
 
         private static void chooseAction(char character)
         {
+            String cToLow = character.ToString().ToLower();
+            character = cToLow.ToCharArray()[0];
+
             string json = "temp";
             bool sendMessage = true;
 
@@ -112,6 +115,9 @@ namespace TcpClient
                 case 'g':
                     json = encapsulatePacket(EngineInteraction.addTerrainNode());
                     break;
+                //case 'h':
+                //    json = encapsulatePacket(EngineInteraction.addRoad());
+                //    break;
                 default:
                     sendMessage = false;
                     Console.WriteLine("Wrong char");
@@ -124,7 +130,8 @@ namespace TcpClient
             }
         }
 
-        private static void printMenu() {
+        private static void printMenu()
+        {
             //Add your own commands
             Console.WriteLine("======================================");
             Console.WriteLine("A: Session List(Use to get Session ID)");
@@ -294,6 +301,23 @@ namespace TcpClient
 
                         }
                     }
+                }
+            };
+        }
+
+        public static object addRoad(string routeUuid, double hightOffset)
+        {
+
+            return new
+            {
+                id = "scene/terain/delete",
+                data = new
+                {
+                    route = routeUuid,
+                    diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
+                    normal = "data/NetworkEngine/textures/tarmac_normale.png",
+                    specular = "data/NetworkEngine/textures/tarmac_specular.png",
+                    heightoffset = hightOffset 
                 }
             };
         }
