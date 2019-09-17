@@ -7,119 +7,295 @@ namespace TcpClient
 {
     class Program
     {
+        public static System.Net.Sockets.TcpClient client;
+        public static NetworkStream stream;
+        public static string sessionId;
+        public static string tunnelId;
+        private static IFormatProvider result;
+
         public static void Main(string[] args)
         {
+            client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
+            stream = client.GetStream();
+
+            Thread listenThread = new Thread(ListenThread);
+            listenThread.Start();
+            Console.WriteLine("Enter a character to send a command");
+            while (true)
+            {
+                printMenu();
+                char henk = Console.ReadLine().ToString().ToCharArray()[0];
+                chooseAction(henk);
+            }
+        }
+
+        static void ListenThread()
+        {
+            while (true)
+            {
+                byte[] buffer = new byte[4];
+
+                int incomingBytes = stream.Read(buffer, 0, buffer.Length);
+                //Console.WriteLine($"Bytes from server: {incomingBytes}");
+                int packetLength = BitConverter.ToInt32(buffer, 0);
+                //Console.WriteLine($"PacketLength: {packetLength}");
+
+                byte[] totalBuffer = new byte[packetLength];
+                int msgPosition = 0;
+                while (msgPosition < packetLength)
+                {
+                    incomingBytes = stream.Read(totalBuffer, msgPosition, packetLength - msgPosition);
+                    msgPosition += incomingBytes;
+                }
+                string json = System.Text.Encoding.UTF8.GetString(totalBuffer, 0, packetLength);
+                //Console.WriteLine(json);
+
+                dynamic deserialized = JsonConvert.DeserializeObject(json);
+
+                if (deserialized != null)
+                {
+                    if (deserialized.id == "session/list")
+                    {
+                        foreach (var item in deserialized.data)
+                        {
+
+                            if (item.clientinfo.user == Environment.UserName)
+                            {
+                                Console.WriteLine("-------------------");
+                                sessionId = item.id;
+                                Console.WriteLine(item.id);
+                            }
+                        }
+                    }
+                    else if (deserialized.id == "tunnel/create")
+                    {
+                        tunnelId = deserialized.data.id;
+                        Console.WriteLine(tunnelId);
+                    }
+                }
+            }
+        }
 
 
-            string id = "session/list";
-            Message message = new Message();
+        private static void chooseAction(char character)
+        {
+            string json = "temp";
+            bool sendMessage = true;
 
-            string json = JsonConvert.SerializeObject(message);
-            Console.WriteLine(JsonConvert.SerializeObject(message));
 
+            switch (character)
+            {
+                case 'a':
+                    json = getSessions();
+                    break;
+                case 'b':
+                    if (sessionId != null)
+                        json = tunnelCreate();
+                    else
+                        Console.WriteLine("No SessionId Found, try 'a'");
+                    break;
+                case 'c':
+                    Console.WriteLine("Enter a time between 0 - 24");
+                    double time = double.Parse(Console.ReadLine());
+                    json = encapsulatePacket(EngineInteraction.convertSkyBoxTime(time));
+                    Console.WriteLine(json);
+                    break;
+                case 'd':
+                    json = encapsulatePacket(EngineInteraction.addFlatTerrain());
+                    break;
+                case 'e':
+                    json = encapsulatePacket(EngineInteraction.addRandomTerrain());
+                    break;
+                case 'f':
+                    json = encapsulatePacket(EngineInteraction.deleteTerrain());
+                    break;
+                case 'g':
+                    json = encapsulatePacket(EngineInteraction.addTerrainNode());
+                    break;
+                default:
+                    sendMessage = false;
+                    Console.WriteLine("Wrong char");
+                    break;
+            }
+
+            if (sendMessage)
+            {
+                sendAction(json);
+            }
+        }
+
+        private static void printMenu() {
+            //Add your own commands
+            Console.WriteLine("======================================");
+            Console.WriteLine("A: Session List(Use to get Session ID)");
+            Console.WriteLine("B: Create Tunnel");
+            Console.WriteLine("C: Change Skybox Time");
+            Console.WriteLine("D: Add flat terrain");
+            Console.WriteLine("E: Add random height terrain");
+            Console.WriteLine("F: Delete terrain");
+            Console.WriteLine("G: Create terrain node");
+            //Console.WriteLine("H: ");
+            //Console.WriteLine("I: ");
+            //Console.WriteLine("J: ");
+            //Console.WriteLine("K: ");
+            //Console.WriteLine("L: ");
+            //Console.WriteLine("M: ");
+            //Console.WriteLine("N: ");
+            //Console.WriteLine("O: ");
+            //Console.WriteLine("P: ");
+            //Console.WriteLine("Q: ");
+            Console.WriteLine("======================================");
+        }
+
+        private static void sendAction(string json)
+        {
             byte[] prependBytes = BitConverter.GetBytes(json.Length);
             byte[] databytes = System.Text.Encoding.UTF8.GetBytes(json);
 
-            System.Net.Sockets.TcpClient client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
+            stream.Write(prependBytes, 0, prependBytes.Length);
+            stream.Write(databytes, 0, databytes.Length);
+        }
+        public static string getSessions()
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                id = "session/list"
+            });
+        }
 
-            NetworkStream stream = client.GetStream();
-
-            //stream.Write(prependBytes, 0, prependBytes.Length);
-            //stream.Write(databytes, 0, databytes.Length);
-
-
-
-            
-            var henk = new {
+        public static string tunnelCreate()
+        {
+            return JsonConvert.SerializeObject(new
+            {
                 id = "tunnel/create",
-                data = new {
-                    session = "0f7ab30a-67fe-4ad5-8c13-72fa8bd9228f", key = "" },
-
-            };
-
-            var henkJson = JsonConvert.SerializeObject(henk);
-
-
-            stream.Write(System.Text.Encoding.UTF8.GetBytes(henkJson),0, henkJson.Length);
-
-            Thread.Sleep(1000);
-            var messageBytes = new byte[2048];
-
-            int receivedCount = stream.Read(messageBytes, 0, messageBytes.Length);
-
-            int datalength = BitConverter.ToInt32(messageBytes, 0);
-
-            Console.WriteLine(datalength);
-            Console.WriteLine(receivedCount);
-            foreach (byte b in messageBytes)
-            {
-                Console.WriteLine(b);
-            }
-
-            Console.WriteLine(System.Text.Encoding.UTF8.GetString(messageBytes, 4, receivedCount - 4));
-            Console.ReadKey();
-
-        }
-
-
-        private static byte[] sendMessage(byte[] messageBytes)
-        {
-            const int bytesize = 1024;
-            try
-            {
-                System.Net.Sockets.TcpClient client = new System.Net.Sockets.TcpClient("127.0.0.1", 1234); // Create a new connection
-                NetworkStream stream = client.GetStream();
-
-                stream.Write(messageBytes, 0, messageBytes.Length); // Write the bytes
-                Console.WriteLine(@"
-            ================================
-            =   Connected to the server    =
-            ================================
-
-                Waiting for response...");
-
-                messageBytes = new byte[bytesize];
-
-                stream.Read(messageBytes, 0, messageBytes.Length);
-
-                // Clean up
-                stream.Dispose();
-                client.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            return messageBytes;
-        }
-
-    }
-
-    class Message
-    {
-
-        public string id { get; set; }
-        public Message()
-        {
-            this.id = "tunnel/create";
-            var data = new { data = new { session = "0f7ab30a-67fe-4ad5-8c13-72fa8bd9228f", key = "" } };
-
-        }
-
-        public string delete()
-            {
-                var delete = new
+                data = new
                 {
-                    id ="scene/terain/delete",
-                    data = new
-                    {
+                    session = sessionId,
+                    key = ""
+                }
 
-                    }
-                };
-                return JsonConvert.SerializeObject(delete);
-            }
+            });
+        }
+        public static string encapsulatePacket(object json)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                id = "tunnel/send",
+                data = new
+                {
+                    dest = tunnelId,
+                    data =
+                        json
+
+                }
+            });
+        }
+
 
     }
 
+    //Add your methods here
+    public class EngineInteraction
+    {
+        public static object convertSkyBoxTime(double time)
+        {
+            return new
+            {
+                id = "scene/skybox/settime",
+                data = new
+                {
+                    time = time
+                }
+            };
+        }
+
+        public static object addFlatTerrain()
+        {
+            int[] heightMap = new int[65536];
+
+            for (int i = 0; i < 65536; i++)
+            {
+                heightMap[i] = 0;
+            }
+            return new
+            {
+                id = "scene/terrain/add",
+                data = new
+                {
+                    size = new[] { 256, 256 },
+                    heights = heightMap
+                }
+            };
+        }
+
+        public static object addRandomTerrain()
+        {
+            double[] heightMap = new double[65536];
+            Random random = new Random();
+
+            for (int i = 0; i < 65536; i++)
+            {
+                heightMap[i] = random.Next(0, 2);
+            }
+            return new
+            {
+                id = "scene/terrain/add",
+                data = new
+                {
+                    size = new[] { 256, 256 },
+                    heights = heightMap
+                }
+            };
+        }
+
+        public static object updateTerrain()
+        {
+
+            return new
+            {
+                id = "scene/terrain/update",
+                data = new
+                {
+                }
+            };
+        }
+
+        public static object deleteTerrain()
+        {
+            return new
+            {
+                id = "scene/terain/delete",
+                data = new
+                {
+
+                }
+            };
+        }
+
+        public static object addTerrainNode()
+        {
+            return new
+            {
+                id = "scene/node/add",
+                data = new
+                {
+                    name = "terrain",
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { 0, 0, 0 },
+                            scale = 1,
+                            rotation = new[] { 0, 0, 0 }
+                        },
+                        terrain = new
+                        {
+                            smoothnormals = true
+
+                        }
+                    }
+                }
+            };
+        }
+    }
 }
