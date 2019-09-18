@@ -11,6 +11,7 @@ namespace TcpClient
         public static NetworkStream stream;
         public static string sessionId;
         public static string tunnelId;
+        public static string routeUuid;
         private static IFormatProvider result;
 
         public static void Main(string[] args)
@@ -72,6 +73,11 @@ namespace TcpClient
                         tunnelId = deserialized.data.id;
                         Console.WriteLine(tunnelId);
                     }
+                    else if (deserialized.data.data.id == "route/add")
+                    {
+                        routeUuid = deserialized.data.data.data.uuid;
+                        Console.WriteLine(routeUuid);
+                    }
                 }
             }
         }
@@ -118,7 +124,7 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.CreateRoute(50,50, 5, -5));
                     break;
                 case 'j':
-                    json = encapsulatePacket(EngineInteraction.DebugRoute(false));
+                    json = encapsulatePacket(EngineInteraction.DebugRoute(true));
                     break;
                 //case 'h':
                 //    json = encapsulatePacket(EngineInteraction.addRoad());
