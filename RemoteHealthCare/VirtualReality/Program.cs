@@ -76,7 +76,7 @@ namespace TcpClient
                     else if (deserialized.data.data.id == "route/add")
                     {
                         routeUuid = deserialized.data.data.data.uuid;
-                        Console.WriteLine(routeUuid);
+                        Console.WriteLine("Route uuid: " + routeUuid);
                     }
                 }
             }
@@ -126,10 +126,9 @@ namespace TcpClient
                 case 'j':
                     json = encapsulatePacket(EngineInteraction.DebugRoute(true));
                     break;
-                //case 'h':
-                //    json = encapsulatePacket(EngineInteraction.addRoad());
-                //    break;
-
+                case 'h':
+                    json = encapsulatePacket(EngineInteraction.addRoad(routeUuid, 1));
+                    break;
                 case 'k':
                     json = encapsulatePacket(EngineInteraction.AddEbicMinecraftSteve(""));
                     break;
@@ -339,6 +338,9 @@ namespace TcpClient
             };
         }
 
+        // Creates 4 route nodes according to the parameters set
+        // where p1 & p2 are positions.
+        // where t1 & t2 are directions.
         public static object CreateRoute(int p1, int p2, int t1, int t2) 
         {          
             return new
@@ -363,14 +365,18 @@ namespace TcpClient
                 }
             };
         }
+        // Creates 4 route nodes according to the parameters set
+        // where p1 & p2 are positions.
+        // where t1 & t2 are directions.
 
-        public static object updateRoute(int p1, int p2, int t1, int t2) 
+        public static object UpdateRoute(string uuid ,int p1, int p2, int t1, int t2) 
         {
             return new
             {
-                id = "route/add",
+                id = "route/update",
                 data = new 
                 {
+                    id = uuid,
                     nodes = new[] 
                     {
                         new { index = 0,
@@ -416,6 +422,31 @@ namespace TcpClient
                 }
             };
         }
+
+        public static object FollowRoute (string uuid, string nodeid) // makes a node follow a route
+        {
+            return new
+            {
+                id = "route/follow",
+                data = new
+                {
+                    route = uuid, // route id
+                    node = nodeid, // this can be any value?
+                    speed = 1.0, // the speed of the node
+                    offset = 0.0, // the offset of the node, 0.0 means the node moves exactly one the line other values mean its off.
+                    rotate = "NONE", // can be set to NONE, XZ or XYZ
+                    smoothing = 1.0, // how smooth the node moves on the route?
+                    followheigth = true, // follows the terrain height
+                    rotateOffset = new[] { 0, 0, 0 }, 
+                    positionOffset = new[] {0,0,0 }
+
+
+
+                }
+            };
+        }
+
+
 
         public static object AddEbicMinecraftSteve(string uuid)
         {
