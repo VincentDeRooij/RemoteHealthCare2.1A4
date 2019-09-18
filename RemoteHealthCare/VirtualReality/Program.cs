@@ -21,6 +21,25 @@ namespace TcpClient
 
             Thread listenThread = new Thread(ListenThread);
             listenThread.Start();
+
+            sendAction(getSessions());
+            while (true) {
+                if (sessionId != null) {
+                    break;
+                }
+                Thread.Sleep(100);
+            }
+
+            sendAction(tunnelCreate());
+            while (true)
+            {
+                if (tunnelId != null)
+                {
+                    break;
+                }
+                Thread.Sleep(100);
+            }
+
             Console.WriteLine("Enter a character to send a command");
             while (true)
             {
@@ -93,30 +112,21 @@ namespace TcpClient
             switch (character)
             {
                 case 'a':
-                    json = getSessions();
-                    break;
-                case 'b':
-                    if (sessionId != null)
-                        json = tunnelCreate();
-                    else
-                        Console.WriteLine("No SessionId Found, try 'a'");
-                    break;
-                case 'c':
                     Console.WriteLine("Enter a time between 0 - 24");
                     double time = double.Parse(Console.ReadLine());
                     json = encapsulatePacket(EngineInteraction.setSkyBoxTime(time));
                     Console.WriteLine(json);
                     break;
-                case 'd':
+                case 'b':
                     json = encapsulatePacket(EngineInteraction.addFlatTerrain());
                     break;
-                case 'e':
+                case 'c':
                     json = encapsulatePacket(EngineInteraction.addRandomTerrain());
                     break;
-                case 'f':
+                case 'd':
                     json = encapsulatePacket(EngineInteraction.deleteTerrain());
                     break;
-                case 'g':
+                case 'e':
                     json = encapsulatePacket(EngineInteraction.addTerrainNode());
                     break;
                 case 'i':
@@ -149,6 +159,7 @@ namespace TcpClient
         {
             //Add your own commands
             Console.WriteLine("======================================");
+<<<<<<< Updated upstream
             Console.WriteLine("A: Session List(Use to get Session ID)");
             Console.WriteLine("B: Create Tunnel");
             Console.WriteLine("C: Change Skybox Time");
@@ -162,6 +173,16 @@ namespace TcpClient
 
             Console.WriteLine("K: Add epic minecraft steve!");
 
+=======
+            Console.WriteLine("A: Change Skybox Time");
+            Console.WriteLine("B: Add flat terrain");
+            Console.WriteLine("C: Add random height terrain");
+            Console.WriteLine("D: Delete terrain");
+            Console.WriteLine("E: Create terrain node");
+            //Console.WriteLine("H: ");
+            //Console.WriteLine("I: ");
+            //Console.WriteLine("J: ");
+>>>>>>> Stashed changes
             //Console.WriteLine("K: ");
             //Console.WriteLine("L: ");
             //Console.WriteLine("M: ");
