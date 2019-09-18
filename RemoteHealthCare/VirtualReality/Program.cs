@@ -104,7 +104,7 @@ namespace TcpClient
                 case 'c':
                     Console.WriteLine("Enter a time between 0 - 24");
                     double time = double.Parse(Console.ReadLine());
-                    json = encapsulatePacket(EngineInteraction.convertSkyBoxTime(time));
+                    json = encapsulatePacket(EngineInteraction.setSkyBoxTime(time));
                     Console.WriteLine(json);
                     break;
                 case 'd':
@@ -120,7 +120,7 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.addTerrainNode());
                     break;
                 case 'i':
-                    json = encapsulatePacket(EngineInteraction.CreateRoute(50, 50, 5, -5));
+                    json = encapsulatePacket(EngineInteraction.createRoute(50, 50, 5, -5));
                     break;
                 case 'j':
                     json = encapsulatePacket(EngineInteraction.DebugRoute(true));
