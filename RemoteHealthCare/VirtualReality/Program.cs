@@ -84,8 +84,7 @@ namespace TcpClient
 
         private static void chooseAction(char character)
         {
-            String cToLow = character.ToString().ToLower();
-            character = cToLow.ToCharArray()[0];
+            character = char.ToLower(character);
 
             string json = "temp";
             bool sendMessage = true;
@@ -121,7 +120,7 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.addTerrainNode());
                     break;
                 case 'i':
-                    json = encapsulatePacket(EngineInteraction.CreateRoute(50,50, 5, -5));
+                    json = encapsulatePacket(EngineInteraction.CreateRoute(50, 50, 5, -5));
                     break;
                 case 'j':
                     json = encapsulatePacket(EngineInteraction.DebugRoute(true));
@@ -162,7 +161,7 @@ namespace TcpClient
             Console.WriteLine("J: Debug/show current route");
 
             Console.WriteLine("K: Add epic minecraft steve!");
-            
+
             //Console.WriteLine("K: ");
             //Console.WriteLine("L: ");
             //Console.WriteLine("M: ");
@@ -189,6 +188,7 @@ namespace TcpClient
             });
         }
 
+        #region Tunnel 
         public static string tunnelCreate()
         {
             return JsonConvert.SerializeObject(new
@@ -217,30 +217,54 @@ namespace TcpClient
                 }
             });
         }
+        #endregion
+
     }
 
     //Add your methods here
     public class EngineInteraction
     {
-        public static object convertSkyBoxTime(double time)
+
+        #region Scene 
+
+        #region Node
+        public static object addTerrainNode()
         {
             return new
             {
-                id = "scene/skybox/settime",
+                id = "scene/node/add",
                 data = new
                 {
-                    time = time
+                    name = "terrain",
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { 0, 0, 0 },
+                            scale = 1,
+                            rotation = new[] { 0, 0, 0 }
+                        },
+                        terrain = new
+                        {
+                            smoothnormals = true
+
+                        }
+                    }
                 }
             };
         }
 
-        public static object addFlatTerrain()
+        #endregion
+
+        #region Terrain 
+        public static object addRandomTerrain()
         {
-            int[] heightMap = new int[65536];
+            double[] heightMap = new double[65536];
+            Random random = new Random();
 
             for (int i = 0; i < 65536; i++)
             {
-                heightMap[i] = 0;
+                heightMap[i] = random.Next(0, 2);
             }
             return new
             {
@@ -253,14 +277,13 @@ namespace TcpClient
             };
         }
 
-        public static object addRandomTerrain()
+        public static object addFlatTerrain()
         {
-            double[] heightMap = new double[65536];
-            Random random = new Random();
+            int[] heightMap = new int[65536];
 
             for (int i = 0; i < 65536; i++)
             {
-                heightMap[i] = random.Next(0, 2);
+                heightMap[i] = 0;
             }
             return new
             {
@@ -289,7 +312,7 @@ namespace TcpClient
         {
             return new
             {
-                id = "scene/terain/delete",
+                id = "scene/terrain/delete",
                 data = new
                 {
 
@@ -297,126 +320,157 @@ namespace TcpClient
             };
         }
 
-        public static object addTerrainNode()
+
+
+        #endregion
+
+        #region Panel
+
+        #endregion
+
+        #region Skybox 
+        public static object setSkyBoxTime(double t)
         {
             return new
             {
-                id = "scene/node/add",
+                id = "scene/skybox/settime",
                 data = new
                 {
-                    name = "terrain",
-                    components = new
-                    {
-                        transform = new
-                        {
-                            position = new[] { 0, 0, 0 },
-                            scale = 1,
-                            rotation = new[] { 0, 0, 0 }
-                        },
-                        terrain = new
-                        {
-                            smoothnormals = true
-
-                        }
-                    }
+                    time = t
                 }
             };
         }
+
+        public static object updateSkyBoxTime(double t)
+        {
+            //TODO 
+            return null;
+        }
+
+        #endregion
+
+        #region Road 
 
         public static object addRoad(string routeUuid, double hightOffset)
         {
             return new
             {
-                id = "scene/terain/delete",
+                id = "scene/road/add",
                 data = new
                 {
                     route = routeUuid,
                     diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
                     normal = "data/NetworkEngine/textures/tarmac_normale.png",
                     specular = "data/NetworkEngine/textures/tarmac_specular.png",
-                    heightoffset = hightOffset 
+                    heightoffset = hightOffset
                 }
             };
         }
 
-        public static object CreateRoute(int p1, int p2, int t1, int t2) 
-        {          
+        public static object updateRoad(string routeUuid, double hightOffset)
+        {
+            return new
+            {
+                id = "scene/road/update",
+                data = new
+                {
+                    route = routeUuid,
+                    diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
+                    normal = "data/NetworkEngine/textures/tarmac_normale.png",
+                    specular = "data/NetworkEngine/textures/tarmac_specular.png",
+                    heightoffset = hightOffset
+                }
+            };
+        }
+
+
+
+        #endregion
+
+        #endregion
+
+        #region Route 
+        public static object createRoute(int p1, int p2, int t1, int t2)
+        {
             return new
             {
                 id = "route/add",
-                data = new 
+                data = new
                 {
-                    nodes = new[] 
+                    nodes = new[]
                     {
                         new { pos = new[] { 0,0,0 },
-                        dir = new[] { t1,0,t2 } },
+                            dir = new[] { t1,0,t2 } },
 
                         new { pos = new[] { p1,0,0 },
-                        dir = new[] { t1,0,t1 } },
+                            dir = new[] { t1,0,t1 } },
 
                         new { pos = new[] { p1,0,p2 },
-                        dir = new[] { t2,0,t1 } },
+                            dir = new[] { t2,0,t1 } },
 
                         new { pos = new[] { 0,0,p2 },
-                        dir = new[] { t2,0,t2 } }
+                            dir = new[] { t2,0,t2 } }
                     }
                 }
             };
         }
 
-        public static object updateRoute(int p1, int p2, int t1, int t2) 
+        public static object updateRoute(int p1, int p2, int t1, int t2)
         {
             return new
             {
                 id = "route/add",
-                data = new 
+                data = new
                 {
-                    nodes = new[] 
+                    nodes = new[]
                     {
                         new { index = 0,
-                        pos = new[] { 0,0,0 },
-                        dir = new[] { t1,0,t2 } },
+                            pos = new[] { 0,0,0 },
+                            dir = new[] { t1,0,t2 } },
 
                         new { index = 1,
-                        pos = new[] { p1,0,0 },
-                        dir = new[] { t1,0,t1 } },
+                            pos = new[] { p1,0,0 },
+                            dir = new[] { t1,0,t1 } },
 
                         new { index = 2,
-                        pos = new[] { p1,0,p2 },
-                        dir = new[] { t2,0,t1 } },
+                            pos = new[] { p1,0,p2 },
+                            dir = new[] { t2,0,t1 } },
 
                         new { index = 3,
-                        pos = new[] { 0,0,p2 },
-                        dir = new[] { t2,0,t2 } }
+                            pos = new[] { 0,0,p2 },
+                            dir = new[] { t2,0,t2 } }
                     }
                 }
             };
         }
 
-        public static object RemoveRoute(string uuid)
+        public static object removeRoute(string uuid)
         {
-            return new 
+            return new
             {
                 id = "route/delete",
-                data = new 
+                data = new
                 {
                     id = uuid
                 }
             };
         }
 
-        public static object DebugRoute(bool show) 
+        public static object DebugRoute(bool show)
         {
-            return new 
+            return new
             {
                 id = "route/show",
-                data = new 
+                data = new
                 {
                     show = show
                 }
             };
         }
 
+        #endregion
+
+        #region Other 
         public static object AddEbicMinecraftSteve(string uuid)
         {
             return new
@@ -443,5 +497,7 @@ namespace TcpClient
                 }
             };
         }
-    }    
+        #endregion
+
+    }
 }
