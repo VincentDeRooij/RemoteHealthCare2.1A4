@@ -21,6 +21,25 @@ namespace TcpClient
 
             Thread listenThread = new Thread(ListenThread);
             listenThread.Start();
+
+            sendAction(getSessions());
+            while (true) {
+                if (sessionId != null) {
+                    break;
+                }
+                Thread.Sleep(100);
+            }
+
+            sendAction(tunnelCreate());
+            while (true)
+            {
+                if (tunnelId != null)
+                {
+                    break;
+                }
+                Thread.Sleep(100);
+            }
+
             Console.WriteLine("Enter a character to send a command");
             while (true)
             {
@@ -84,8 +103,7 @@ namespace TcpClient
 
         private static void chooseAction(char character)
         {
-            String cToLow = character.ToString().ToLower();
-            character = cToLow.ToCharArray()[0];
+            character = char.ToLower(character);
 
             string json = "temp";
             bool sendMessage = true;
@@ -94,43 +112,35 @@ namespace TcpClient
             switch (character)
             {
                 case 'a':
-                    json = getSessions();
-                    break;
-                case 'b':
-                    if (sessionId != null)
-                        json = tunnelCreate();
-                    else
-                        Console.WriteLine("No SessionId Found, try 'a'");
-                    break;
-                case 'c':
                     Console.WriteLine("Enter a time between 0 - 24");
                     double time = double.Parse(Console.ReadLine());
-                    json = encapsulatePacket(EngineInteraction.convertSkyBoxTime(time));
+                    json = encapsulatePacket(EngineInteraction.setSkyBoxTime(time));
                     Console.WriteLine(json);
                     break;
-                case 'd':
+                case 'b':
                     json = encapsulatePacket(EngineInteraction.addFlatTerrain());
                     break;
-                case 'e':
+                case 'c':
                     json = encapsulatePacket(EngineInteraction.addRandomTerrain());
                     break;
-                case 'f':
+                case 'd':
                     json = encapsulatePacket(EngineInteraction.deleteTerrain());
                     break;
-                case 'g':
+                case 'e':
                     json = encapsulatePacket(EngineInteraction.addTerrainNode());
                     break;
                 case 'i':
-                    json = encapsulatePacket(EngineInteraction.CreateRoute(50,50, 5, -5));
+                    json = encapsulatePacket(EngineInteraction.createRoute(50, 50, 5, -5));
                     break;
                 case 'j':
-                    json = encapsulatePacket(EngineInteraction.DebugRoute(true));
+                    json = encapsulatePacket(EngineInteraction.debugRoute(true));
                     break;
                 case 'h':
-                    json = encapsulatePacket(EngineInteraction.addRoad(routeUuid, 1));
+                    json = encapsulatePacket(EngineInteraction.addRoad(routeUuid, 0.01));
                     break;
+
                 case 'k':
-                    json = encapsulatePacket(EngineInteraction.AddEbicMinecraftSteve(""));
+                    json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(""));
                     break;
 
                 default:
@@ -149,26 +159,16 @@ namespace TcpClient
         {
             //Add your own commands
             Console.WriteLine("======================================");
-            Console.WriteLine("A: Session List(Use to get Session ID)");
-            Console.WriteLine("B: Create Tunnel");
-            Console.WriteLine("C: Change Skybox Time");
-            Console.WriteLine("D: Add flat terrain");
-            Console.WriteLine("E: Add random height terrain");
-            Console.WriteLine("F: Delete terrain");
-            Console.WriteLine("G: Create terrain node");
-            //Console.WriteLine("H:");
+            Console.WriteLine("A: Change Skybox Time");
+            Console.WriteLine("B: Add flat terrain");
+            Console.WriteLine("C: Add random height terrain");
+            Console.WriteLine("D: Delete terrain");
+            Console.WriteLine("E: Create terrain node");
+            Console.WriteLine("H: Add new route");
             Console.WriteLine("I: Create route nodes");
             Console.WriteLine("J: Debug/show current route");
-
             Console.WriteLine("K: Add epic minecraft steve!");
-            
-            //Console.WriteLine("K: ");
-            //Console.WriteLine("L: ");
-            //Console.WriteLine("M: ");
-            //Console.WriteLine("N: ");
-            //Console.WriteLine("O: ");
-            //Console.WriteLine("P: ");
-            //Console.WriteLine("Q: ");
+
             Console.WriteLine("======================================");
         }
 
@@ -188,6 +188,7 @@ namespace TcpClient
             });
         }
 
+        #region Tunnel 
         public static string tunnelCreate()
         {
             return JsonConvert.SerializeObject(new
@@ -216,30 +217,54 @@ namespace TcpClient
                 }
             });
         }
+        #endregion
+
     }
 
     //Add your methods here
     public class EngineInteraction
     {
-        public static object convertSkyBoxTime(double time)
+
+        #region Scene 
+
+        #region Node
+        public static object addTerrainNode()
         {
             return new
             {
-                id = "scene/skybox/settime",
+                id = "scene/node/add",
                 data = new
                 {
-                    time = time
+                    name = "terrain",
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { 0, 0, 0 },
+                            scale = 1,
+                            rotation = new[] { 0, 0, 0 }
+                        },
+                        terrain = new
+                        {
+                            smoothnormals = true
+
+                        }
+                    }
                 }
             };
         }
 
-        public static object addFlatTerrain()
+        #endregion
+
+        #region Terrain 
+        public static object addRandomTerrain()
         {
-            int[] heightMap = new int[65536];
+            double[] heightMap = new double[65536];
+            Random random = new Random();
 
             for (int i = 0; i < 65536; i++)
             {
-                heightMap[i] = 0;
+                heightMap[i] = random.Next(0, 2);
             }
             return new
             {
@@ -252,14 +277,13 @@ namespace TcpClient
             };
         }
 
-        public static object addRandomTerrain()
+        public static object addFlatTerrain()
         {
-            double[] heightMap = new double[65536];
-            Random random = new Random();
+            int[] heightMap = new int[65536];
 
             for (int i = 0; i < 65536; i++)
             {
-                heightMap[i] = random.Next(0, 2);
+                heightMap[i] = 0;
             }
             return new
             {
@@ -288,7 +312,7 @@ namespace TcpClient
         {
             return new
             {
-                id = "scene/terain/delete",
+                id = "scene/terrain/delete",
                 data = new
                 {
 
@@ -296,71 +320,96 @@ namespace TcpClient
             };
         }
 
-        public static object addTerrainNode()
+
+
+        #endregion
+
+        #region Panel
+
+        #endregion
+
+        #region Skybox 
+        public static object setSkyBoxTime(double t)
         {
             return new
             {
-                id = "scene/node/add",
+                id = "scene/skybox/settime",
                 data = new
                 {
-                    name = "terrain",
-                    components = new
-                    {
-                        transform = new
-                        {
-                            position = new[] { 0, 0, 0 },
-                            scale = 1,
-                            rotation = new[] { 0, 0, 0 }
-                        },
-                        terrain = new
-                        {
-                            smoothnormals = true
-
-                        }
-                    }
+                    time = t
                 }
             };
         }
+
+        public static object updateSkyBoxTime(double t)
+        {
+            //TODO 
+            return null;
+        }
+
+        #endregion
+
+        #region Road 
 
         public static object addRoad(string routeUuid, double hightOffset)
         {
             return new
             {
-                id = "scene/terain/delete",
+                id = "scene/road/add",
                 data = new
                 {
                     route = routeUuid,
                     diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
                     normal = "data/NetworkEngine/textures/tarmac_normale.png",
                     specular = "data/NetworkEngine/textures/tarmac_specular.png",
-                    heightoffset = hightOffset 
+                    heightoffset = hightOffset
                 }
             };
         }
 
-        // Creates 4 route nodes according to the parameters set
-        // where p1 & p2 are positions.
-        // where t1 & t2 are directions.
-        public static object CreateRoute(int p1, int p2, int t1, int t2) 
-        {          
+        public static object updateRoad(string routeUuid, double hightOffset)
+        {
+            return new
+            {
+                id = "scene/road/update",
+                data = new
+                {
+                    route = routeUuid,
+                    diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
+                    normal = "data/NetworkEngine/textures/tarmac_normale.png",
+                    specular = "data/NetworkEngine/textures/tarmac_specular.png",
+                    heightoffset = hightOffset
+                }
+            };
+        }
+
+
+
+        #endregion
+
+        #endregion
+
+        #region Route 
+        public static object createRoute(int p1, int p2, int t1, int t2)
+        {
             return new
             {
                 id = "route/add",
-                data = new 
+                data = new
                 {
-                    nodes = new[] 
+                    nodes = new[]
                     {
                         new { pos = new[] { 0,0,0 },
-                        dir = new[] { t1,0,t2 } },
+                            dir = new[] { t1,0,t2 } },
 
                         new { pos = new[] { p1,0,0 },
-                        dir = new[] { t1,0,t1 } },
+                            dir = new[] { t1,0,t1 } },
 
                         new { pos = new[] { p1,0,p2 },
-                        dir = new[] { t2,0,t1 } },
+                            dir = new[] { t2,0,t1 } },
 
                         new { pos = new[] { 0,0,p2 },
-                        dir = new[] { t2,0,t2 } }
+                            dir = new[] { t2,0,t2 } }
                     }
                 }
             };
@@ -369,86 +418,63 @@ namespace TcpClient
         // where p1 & p2 are positions.
         // where t1 & t2 are directions.
 
-        public static object UpdateRoute(string uuid ,int p1, int p2, int t1, int t2) 
+        public static object updateRoute(int p1, int p2, int t1, int t2)
         {
             return new
             {
-                id = "route/update",
-                data = new 
+                id = "route/add",
+                data = new
                 {
-                    id = uuid,
-                    nodes = new[] 
+                    nodes = new[]
                     {
                         new { index = 0,
-                        pos = new[] { 0,0,0 },
-                        dir = new[] { t1,0,t2 } },
+                            pos = new[] { 0,0,0 },
+                            dir = new[] { t1,0,t2 } },
 
                         new { index = 1,
-                        pos = new[] { p1,0,0 },
-                        dir = new[] { t1,0,t1 } },
+                            pos = new[] { p1,0,0 },
+                            dir = new[] { t1,0,t1 } },
 
                         new { index = 2,
-                        pos = new[] { p1,0,p2 },
-                        dir = new[] { t2,0,t1 } },
+                            pos = new[] { p1,0,p2 },
+                            dir = new[] { t2,0,t1 } },
 
                         new { index = 3,
-                        pos = new[] { 0,0,p2 },
-                        dir = new[] { t2,0,t2 } }
+                            pos = new[] { 0,0,p2 },
+                            dir = new[] { t2,0,t2 } }
                     }
                 }
             };
         }
 
-        public static object RemoveRoute(string uuid)
+        public static object removeRoute(string uuid)
         {
-            return new 
+            return new
             {
                 id = "route/delete",
-                data = new 
+                data = new
                 {
                     id = uuid
                 }
             };
         }
 
-        public static object DebugRoute(bool show) 
+        public static object debugRoute(bool show)
         {
-            return new 
+            return new
             {
                 id = "route/show",
-                data = new 
+                data = new
                 {
                     show = show
                 }
             };
         }
 
-        public static object FollowRoute (string uuid, string nodeid) // makes a node follow a route
-        {
-            return new
-            {
-                id = "route/follow",
-                data = new
-                {
-                    route = uuid, // route id
-                    node = nodeid, // this can be any value?
-                    speed = 1.0, // the speed of the node
-                    offset = 0.0, // the offset of the node, 0.0 means the node moves exactly one the line other values mean its off.
-                    rotate = "NONE", // can be set to NONE, XZ or XYZ
-                    smoothing = 1.0, // how smooth the node moves on the route?
-                    followheigth = true, // follows the terrain height
-                    rotateOffset = new[] { 0, 0, 0 }, 
-                    positionOffset = new[] {0,0,0 }
+        #endregion
 
-
-
-                }
-            };
-        }
-
-
-
-        public static object AddEbicMinecraftSteve(string uuid)
+        #region Other 
+        public static object addEbicMinecraftSteve(string uuid)
         {
             return new
             {
@@ -474,5 +500,7 @@ namespace TcpClient
                 }
             };
         }
-    }    
+        #endregion
+
+    }
 }
