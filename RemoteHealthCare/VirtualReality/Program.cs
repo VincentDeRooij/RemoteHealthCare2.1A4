@@ -159,37 +159,16 @@ namespace TcpClient
         {
             //Add your own commands
             Console.WriteLine("======================================");
-<<<<<<< Updated upstream
-            Console.WriteLine("A: Session List(Use to get Session ID)");
-            Console.WriteLine("B: Create Tunnel");
-            Console.WriteLine("C: Change Skybox Time");
-            Console.WriteLine("D: Add flat terrain");
-            Console.WriteLine("E: Add random height terrain");
-            Console.WriteLine("F: Delete terrain");
-            Console.WriteLine("G: Create terrain node");
-            //Console.WriteLine("H:");
-            Console.WriteLine("I: Create route nodes");
-            Console.WriteLine("J: Debug/show current route");
-
-            Console.WriteLine("K: Add epic minecraft steve!");
-
-=======
             Console.WriteLine("A: Change Skybox Time");
             Console.WriteLine("B: Add flat terrain");
             Console.WriteLine("C: Add random height terrain");
             Console.WriteLine("D: Delete terrain");
             Console.WriteLine("E: Create terrain node");
-            //Console.WriteLine("H: ");
-            //Console.WriteLine("I: ");
-            //Console.WriteLine("J: ");
->>>>>>> Stashed changes
-            //Console.WriteLine("K: ");
-            //Console.WriteLine("L: ");
-            //Console.WriteLine("M: ");
-            //Console.WriteLine("N: ");
-            //Console.WriteLine("O: ");
-            //Console.WriteLine("P: ");
-            //Console.WriteLine("Q: ");
+            Console.WriteLine("H: Add new route");
+            Console.WriteLine("I: Create route nodes");
+            Console.WriteLine("J: Debug/show current route");
+            Console.WriteLine("K: Add epic minecraft steve!");
+
             Console.WriteLine("======================================");
         }
 
