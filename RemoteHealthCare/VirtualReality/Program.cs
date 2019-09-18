@@ -12,6 +12,7 @@ namespace TcpClient
         public static string sessionId;
         public static string tunnelId;
         public static string routeUuid;
+        public static string steveUuid;
         private static IFormatProvider result;
 
         public static void Main(string[] args)
@@ -23,8 +24,10 @@ namespace TcpClient
             listenThread.Start();
 
             sendAction(getSessions());
-            while (true) {
-                if (sessionId != null) {
+            while (true)
+            {
+                if (sessionId != null)
+                {
                     break;
                 }
                 Thread.Sleep(100);
@@ -68,7 +71,7 @@ namespace TcpClient
                     msgPosition += incomingBytes;
                 }
                 string json = System.Text.Encoding.UTF8.GetString(totalBuffer, 0, packetLength);
-                //Console.WriteLine(json);
+                Console.WriteLine(json);
 
                 dynamic deserialized = JsonConvert.DeserializeObject(json);
 
@@ -96,6 +99,11 @@ namespace TcpClient
                     {
                         routeUuid = deserialized.data.data.data.uuid;
                         Console.WriteLine("Route uuid: " + routeUuid);
+                    }
+                    else if (deserialized.data.data.id == "scene/node/add")
+                    {
+                        steveUuid = deserialized.data.data.data.uuid;
+                        Console.WriteLine("Steve uuid: " + steveUuid);
                     }
                 }
             }
@@ -138,9 +146,28 @@ namespace TcpClient
                 case 'h':
                     json = encapsulatePacket(EngineInteraction.addRoad(routeUuid, 0.01));
                     break;
-
                 case 'k':
-                    json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(""));
+                    Console.WriteLine("Insert scale");
+                    double scale = double.Parse(Console.ReadLine());
+                    Console.WriteLine("Insert x");
+                    double x = double.Parse(Console.ReadLine());
+                    Console.WriteLine("Insert y");
+                    double y = double.Parse(Console.ReadLine());
+                    Console.WriteLine("Insert z");
+                    double z = double.Parse(Console.ReadLine());
+                    json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(scale, x, y, z));
+                    break;
+                case 'l':
+                    json = encapsulatePacket(EngineInteraction.removeLastSteve(steveUuid));
+                    Console.WriteLine(json);
+                    break;
+                case 'm':
+                    json = encapsulatePacket(EngineInteraction.followRoute(routeUuid,steveUuid));
+                    Console.WriteLine(json);
+                    break;
+                case 'n':
+                    json = encapsulatePacket(EngineInteraction.resetScene());
+                    Console.WriteLine(json);
                     break;
 
                 default:
@@ -168,6 +195,9 @@ namespace TcpClient
             Console.WriteLine("I: Create route nodes");
             Console.WriteLine("J: Debug/show current route");
             Console.WriteLine("K: Add epic minecraft steve!");
+            Console.WriteLine("L: Remove epic minecraft steve:(");
+            Console.WriteLine("M: Make Steve follow the route:(");
+            Console.WriteLine("N: Reset scene:(");
 
             Console.WriteLine("======================================");
         }
@@ -382,7 +412,7 @@ namespace TcpClient
                 }
             };
         }
-               
+
         #endregion
 
         #endregion
@@ -461,7 +491,7 @@ namespace TcpClient
                 {
                     route = uuid, // route id
                     node = nodeid, // this can be any value?
-                    speed = 1.0, // the speed of the node
+                    speed = 10.0, // the speed of the node
                     offset = 0.0, // the offset of the node, 0.0 means the node moves exactly one the line other values mean its off.
                     rotate = "NONE", // can be set to NONE, XZ or XYZ
                     smoothing = 1.0, // how smooth the node moves on the route?
@@ -512,7 +542,7 @@ namespace TcpClient
         #endregion
 
         #region Other 
-        public static object addEbicMinecraftSteve(string uuid)
+        public static object addEbicMinecraftSteve(double scale, double x, double y, double z)
         {
             return new
             {
@@ -520,22 +550,44 @@ namespace TcpClient
                 data = new
                 {
                     name = "Steve",
-                    parent = "GEEN ROOT UUID WANT IK SNAP ME GOD NIET HOE IK ALLES OP MOET VRAGEN ZONDER RETURN WAARDES maar het werkt wel met Johan's code",
                     components = new
                     {
                         transform = new
                         {
-                            position = new[] { 0, 0, 0 },
+                            position = new[] { x, y, z },
                             rotation = new[] { 0, 0, 0 },
-                            scale = 10
+                            scale = scale
                         },
                         model = new
                         {
                             file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
-                            cullbackfaces = false
+                            animated = false,
+                            animation = "animationname"
                         }
+
                     }
                 }
+
+            };
+        }
+
+        public static object removeLastSteve(string uuid)
+        {
+            return new
+            {
+                id = "scene/node/delete",
+                data = new
+                {
+                    id = uuid
+                }
+            };
+        }
+
+        public static object resetScene()
+        {
+            return new
+            {
+                id = "scene/reset"
             };
         }
         #endregion
