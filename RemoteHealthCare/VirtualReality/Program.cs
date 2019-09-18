@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Threading;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TcpClient
 {
@@ -13,6 +14,7 @@ namespace TcpClient
         public static string tunnelId;
         public static string routeUuid;
         private static IFormatProvider result;
+        public static String sceneJson;
 
         public static void Main(string[] args)
         {
@@ -92,6 +94,29 @@ namespace TcpClient
                         tunnelId = deserialized.data.id;
                         Console.WriteLine(tunnelId);
                     }
+                    else if (deserialized.id == "scene/get")
+                    {
+                        sceneJson = deserialized.data;
+                        Console.WriteLine(sceneJson);
+                    }
+                    else if (deserialized.id == "scene/reset")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/reset'");
+                    }
+                    else if (deserialized.id == "scene/save")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/save'");
+                    }
+                    else if (deserialized.id == "scene/load")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/load'");
+                    }
+
+
+
                     else if (deserialized.data.data.id == "route/add")
                     {
                         routeUuid = deserialized.data.data.data.uuid;
@@ -226,6 +251,60 @@ namespace TcpClient
     {
 
         #region Scene 
+        public static object getScene()
+        {
+            return new
+            {
+                id = "scene/get"
+            };
+        }
+
+        public static object resetScene()
+        {
+            return new
+            {
+                id = "scene/reset"
+            };
+        }
+
+        public static object saveScene(bool overwrite_)
+        {
+            return new
+            {
+                id = "scene/save",
+                data = new
+                {
+                    filename = "cookie.json",
+                    overwrite = overwrite_
+                }
+            };
+        }
+
+        public static object raycastScene(int[] startPosition, int[] directionPoint, bool physicsCheck)
+        {
+            return new
+            {
+                id = "scene/raycast",
+                data = new
+                {
+                    start = startPosition,
+                    direction = directionPoint,
+                    physics = physicsCheck.ToString().ToLower()
+                }
+            };
+        }
+
+        public static object loadScene()
+        {
+            return new
+            {
+                id = "scene/load",
+                data = new
+                {
+                    filename = "cookie.json"
+                }
+            };
+        }
 
         #region Node
         public static object addTerrainNode()
@@ -329,22 +408,23 @@ namespace TcpClient
         #endregion
 
         #region Skybox 
-        public static object setSkyBoxTime(double t)
+        public static object setSkyBoxTime(double time_)
         {
             return new
             {
                 id = "scene/skybox/settime",
                 data = new
                 {
-                    time = t
+                    time = time_
                 }
             };
         }
 
         public static object updateSkyBoxTime(double t)
         {
-            //TODO 
+            //TODO *
             return null;
+            Console.WriteLine("Invoked TODO Method>'updateSkyBoxTime(double t)'");
         }
 
         #endregion
