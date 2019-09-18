@@ -382,14 +382,16 @@ namespace TcpClient
                 }
             };
         }
-
-
-
+               
         #endregion
 
         #endregion
 
         #region Route 
+        // Creates 4 route nodes according to the parameters set
+        // where p1 & p2 are positions so p1=50 & p2=50 means you get a square shaped route 
+        // where t1 & t2 are direction, the directions mean the shaping of the route, if the directions are t1 = 0 & t2 = 0. You get straight lines
+        // so when you want a smoother route tweak the t1 & t2 parameters.
         public static object createRoute(int p1, int p2, int t1, int t2)
         {
             return new
@@ -400,49 +402,85 @@ namespace TcpClient
                     nodes = new[]
                     {
                         new { pos = new[] { 0,0,0 },
-                            dir = new[] { t1,0,t2 } },
+                        dir = new[] { t1,0,t2 } },
 
                         new { pos = new[] { p1,0,0 },
-                            dir = new[] { t1,0,t1 } },
+                        dir = new[] { t1,0,t1 } },
 
                         new { pos = new[] { p1,0,p2 },
-                            dir = new[] { t2,0,t1 } },
+                        dir = new[] { t2,0,t1 } },
 
                         new { pos = new[] { 0,0,p2 },
-                            dir = new[] { t2,0,t2 } }
+                        dir = new[] { t2,0,t2 } }
                     }
                 }
             };
         }
-        // Creates 4 route nodes according to the parameters set
-        // where p1 & p2 are positions.
-        // where t1 & t2 are directions.
-
-        public static object updateRoute(int p1, int p2, int t1, int t2)
+        // updates the 4 route nodes according to the parameters set
+        // where p1 & p2 are positions so p1=50 & p2=50 means you get a square shaped route 
+        // where t1 & t2 are direction, the directions mean the shaping of the route, if the directions are t1 = 0 & t2 = 0. You get straight lines
+        // so when you want a smoother route tweak the t1 & t2 parameters.
+        //  
+        // the uuid is the route id. 
+        public static object updateRoute(string uuid, int p1, int p2, int t1, int t2)
         {
             return new
             {
-                id = "route/add",
+                id = "route/update",
                 data = new
                 {
+                    id = uuid,
                     nodes = new[]
                     {
                         new { index = 0,
-                            pos = new[] { 0,0,0 },
-                            dir = new[] { t1,0,t2 } },
+                        pos = new[] { 0,0,0 },
+                        dir = new[] { t1,0,t2 } },
 
                         new { index = 1,
-                            pos = new[] { p1,0,0 },
-                            dir = new[] { t1,0,t1 } },
+                        pos = new[] { p1,0,0 },
+                        dir = new[] { t1,0,t1 } },
 
                         new { index = 2,
-                            pos = new[] { p1,0,p2 },
-                            dir = new[] { t2,0,t1 } },
+                        pos = new[] { p1,0,p2 },
+                        dir = new[] { t2,0,t1 } },
 
                         new { index = 3,
-                            pos = new[] { 0,0,p2 },
-                            dir = new[] { t2,0,t2 } }
+                        pos = new[] { 0,0,p2 },
+                        dir = new[] { t2,0,t2 } }
                     }
+                }
+            };
+        }
+
+        public static object followRoute(string uuid, string nodeid) // makes a node follow a route
+        {
+            return new
+            {
+                id = "route/follow",
+                data = new
+                {
+                    route = uuid, // route id
+                    node = nodeid, // this can be any value?
+                    speed = 1.0, // the speed of the node
+                    offset = 0.0, // the offset of the node, 0.0 means the node moves exactly one the line other values mean its off.
+                    rotate = "NONE", // can be set to NONE, XZ or XYZ
+                    smoothing = 1.0, // how smooth the node moves on the route?
+                    followheigth = true, //set bool to follow the terrain height
+                    rotateOffset = new[] { 0, 0, 0 },
+                    positionOffset = new[] { 0, 0, 0 }
+                }
+            };
+        }
+
+        public static object updateFollowRouteSpeed(string nodeid, double newSpeed) // changes a given node speed
+        {
+            return new
+            {
+                id = "route/follow/speed",
+                data = new
+                {
+                    node = nodeid, // the value of the given node
+                    speed = newSpeed // the speed of the node
                 }
             };
         }
@@ -454,7 +492,7 @@ namespace TcpClient
                 id = "route/delete",
                 data = new
                 {
-                    id = uuid
+                    id = uuid // deletes the route with the given uuid
                 }
             };
         }
