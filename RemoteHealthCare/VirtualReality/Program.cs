@@ -123,14 +123,14 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.createRoute(50, 50, 5, -5));
                     break;
                 case 'j':
-                    json = encapsulatePacket(EngineInteraction.DebugRoute(true));
+                    json = encapsulatePacket(EngineInteraction.debugRoute(true));
                     break;
-                //case 'h':
-                //    json = encapsulatePacket(EngineInteraction.addRoad());
-                //    break;
+                case 'h':
+                    json = encapsulatePacket(EngineInteraction.addRoad(routeUuid, 0.01));
+                    break;
 
                 case 'k':
-                    json = encapsulatePacket(EngineInteraction.AddEbicMinecraftSteve(""));
+                    json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(""));
                     break;
 
                 default:
@@ -456,7 +456,7 @@ namespace TcpClient
             };
         }
 
-        public static object DebugRoute(bool show)
+        public static object debugRoute(bool show)
         {
             return new
             {
@@ -471,7 +471,7 @@ namespace TcpClient
         #endregion
 
         #region Other 
-        public static object AddEbicMinecraftSteve(string uuid)
+        public static object addEbicMinecraftSteve(string uuid)
         {
             return new
             {
