@@ -2,6 +2,9 @@
 using System.Net.Sockets;
 using System.Threading;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Drawing;
+using System.Collections.Generic;
 
 namespace TcpClient
 {
@@ -14,6 +17,7 @@ namespace TcpClient
         public static string routeUuid;
         public static string steveUuid;
         private static IFormatProvider result;
+        public static String sceneJson;
 
         public static void Main(string[] args)
         {
@@ -95,6 +99,49 @@ namespace TcpClient
                         tunnelId = deserialized.data.id;
                         Console.WriteLine(tunnelId);
                     }
+                    else if (deserialized.id == "scene/get")
+                    {
+                        sceneJson = deserialized.data;
+                        Console.WriteLine(sceneJson);
+                    }
+                    else if (deserialized.id == "scene/reset")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/reset'");
+                    }
+                    else if (deserialized.id == "scene/save")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/save'");
+                    }
+                    else if (deserialized.id == "scene/load")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/load'");
+                    }
+                    else if (deserialized.id == "scene/raycast")
+                    {
+                        //TODO * 
+                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/raycast'");
+                    }
+                    /*TODO: 
+                    - node add 
+                    - update node 
+                    - moveto node 
+                    - delete node 
+                    - find node
+                    - add layer to node 
+                    - dellayer
+
+                    - clear panel 
+                    - swap panel 
+                    - drawlines panel 
+                    - set clear color panel 
+                    - drawtext panel 
+                    - image panel 
+                    */
+
+
                     else if (deserialized.data.data.id == "route/add")
                     {
                         routeUuid = deserialized.data.data.data.uuid;
@@ -256,6 +303,60 @@ namespace TcpClient
     {
 
         #region Scene 
+        public static object getScene()
+        {
+            return new
+            {
+                id = "scene/get"
+            };
+        }
+
+        public static object resetScene()
+        {
+            return new
+            {
+                id = "scene/reset"
+            };
+        }
+
+        public static object saveScene(bool overwrite_)
+        {
+            return new
+            {
+                id = "scene/save",
+                data = new
+                {
+                    filename = "cookie.json",
+                    overwrite = overwrite_
+                }
+            };
+        }
+
+        public static object loadScene()
+        {
+            return new
+            {
+                id = "scene/load",
+                data = new
+                {
+                    filename = "cookie.json"
+                }
+            };
+        }
+
+        public static object raycastScene(int[] startPosition, int[] directionPoint, bool physicsCheck)
+        {
+            return new
+            {
+                id = "scene/raycast",
+                data = new
+                {
+                    start = startPosition,
+                    direction = directionPoint,
+                    physics = physicsCheck.ToString().ToLower()
+                }
+            };
+        }
 
         #region Node
         public static object addTerrainNode()
@@ -280,6 +381,197 @@ namespace TcpClient
 
                         }
                     }
+                }
+            };
+        }
+
+        public static object updateNode(string nodeID, string parentID, int[] position_, int scale_, int[] rotation_,
+            string animationName, double animationSpeed)
+        {
+            return new
+            {
+                id = "scene/node/update",
+                data = new
+                {
+                    id = nodeID,
+                    parent = parentID,
+                    transform = new
+                    {
+                        position = position_,
+                        scale = scale_,
+                        rotation = rotation_
+                    },
+                    animation = new
+                    {
+                        name = animationName,
+                        speed = animationSpeed
+                    }
+                }
+            };
+        }
+
+        public static object movetoNode(string nodeID, string stopMovement, int[] destinationPosition, string rotate_,
+            string interpolate_, bool followheight_, double speed_)
+        {
+            return new
+            {
+                id = "scene/node/moveto",
+                data = new
+                {
+                    id = nodeID,
+                    stop = stopMovement,
+                    position = destinationPosition,
+                    rotate = rotate_,
+                    interpolate = interpolate_,
+                    followheight = followheight_,
+                    speed = speed_
+                }
+            };
+        }
+
+        public static object deleteNode(string nodeID)
+        {
+            return new
+            {
+                id = "scene/node/delete",
+                data = new
+                {
+                    id = nodeID
+                }
+            };
+        }
+
+        public static object findNode(string nodeName)
+        {
+            return new
+            {
+                id = "scene/node/find",
+                data = new
+                {
+                    name = nodeName
+                }
+            };
+        }
+
+        public static object addLayer(string nodeID, string diffuseTexturePNG, string normalTexturePNG,
+            int minHeight_, int maxHeight_, int fadeDist_)
+        {
+            return new
+            {
+                id = "scene/node/addlayer",
+                data = new
+                {
+                    id = nodeID,
+                    diffuse = diffuseTexturePNG,
+                    normal = normalTexturePNG,
+                    minHeight = minHeight_,
+                    maxHeight = maxHeight_,
+                    fadeDist = fadeDist_
+                }
+            };
+        }
+
+        public static object dellayer()
+        {
+            return new
+            {
+                id = "scene/node/dellayer",
+                data = new
+                {
+
+                }
+            };
+        }
+
+        #endregion
+
+        #region Panel
+
+        public static object clearPanel(string nodeID)
+        {
+            return new
+            {
+                id = "scene/panel/clear",
+                data = new
+                {
+                    id = nodeID
+                }
+            };
+        }
+
+        public static object swapPanel(string nodeID)
+        {
+            return new
+            {
+                id = "scene/panel/swap",
+                data = new
+                {
+                    id = nodeID
+                }
+            };
+        }
+
+        public static object drawLinesPanel(string nodeID, int width_)
+        {
+            return new
+            {
+                id = "scene/panel/drawlines",
+                data = new
+                {
+                    id = nodeID,
+                    width = width_,
+                    lines = new
+                    {
+                        /*
+                        TODO:
+                        [ 0,0, 10,10, 0,0,0,1, // x1,y1, x2,y2, r,g,b,a ],
+                        [0, 0, 100, 10, 0, 0, 0, 1, // x1,y1, x2,y2, r,g,b,a ]
+                        */
+                    }
+                }
+            };
+        }
+
+        public static object setClearColorPanel(string nodeID, int[] colorsARGB)
+        {
+            return new
+            {
+                id = "scene/panel/setclearcolor",
+                data = new
+                {
+                    id = nodeID,
+                    color = colorsARGB
+                }
+            };
+        }
+
+        public static object drawTextPanel(string nodeID, string text_, double[] positionXY, double size_, int[] colorsARGB)
+        {
+            return new
+            {
+                id = "scene/panel/drawtext",
+                data = new
+                {
+                    id = nodeID, 
+                    text = text_, 
+                    position = positionXY, 
+                    size = size_, 
+                    color = colorsARGB
+                }
+            };
+        }
+
+        public static object imagePanel(string nodeID, string imagePNG, double[] positionXY, double[] sizeXY)
+        {
+            return new
+            {
+                id = "scene/panel/image",
+                data = new
+                {
+                    id = nodeID, 
+                    image = imagePNG, 
+                    position = positionXY, 
+                    size = sizeXY
                 }
             };
         }
@@ -334,6 +626,7 @@ namespace TcpClient
                 id = "scene/terrain/update",
                 data = new
                 {
+
                 }
             };
         }
@@ -354,27 +647,24 @@ namespace TcpClient
 
         #endregion
 
-        #region Panel
-
-        #endregion
-
         #region Skybox 
-        public static object setSkyBoxTime(double t)
+        public static object setSkyBoxTime(double time_)
         {
             return new
             {
                 id = "scene/skybox/settime",
                 data = new
                 {
-                    time = t
+                    time = time_
                 }
             };
         }
 
         public static object updateSkyBoxTime(double t)
         {
-            //TODO 
+            //TODO *
             return null;
+            Console.WriteLine("Invoked TODO Method>'updateSkyBoxTime(double t)'");
         }
 
         #endregion
