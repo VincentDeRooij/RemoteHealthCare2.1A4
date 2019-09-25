@@ -16,8 +16,10 @@ namespace TcpClient
         public static string tunnelId;
         public static string routeUuid;
         public static string steveUuid;
+        public static string headUuid;
         private static IFormatProvider result;
         public static String sceneJson;
+        public static Dictionary<String, String> Uuids = new Dictionary<string, string>();
 
         public static void Main(string[] args)
         {
@@ -51,8 +53,10 @@ namespace TcpClient
             while (true)
             {
                 printMenu();
-                char henk = Console.ReadLine().ToString().ToCharArray()[0];
-                chooseAction(henk);
+                //char henk = Console.ReadLine().ToString().ToCharArray()[0];
+                char input = Console.ReadKey().KeyChar;
+                Console.WriteLine("");
+                chooseAction(input);
             }
         }
 
@@ -81,49 +85,94 @@ namespace TcpClient
 
                 if (deserialized != null)
                 {
-                    if (deserialized.id == "session/list")
+                    switch ((string)deserialized.id)
                     {
-                        foreach (var item in deserialized.data)
-                        {
-
-                            if (item.clientinfo.user == Environment.UserName)
+                        case "session/list":
+                            foreach (var item in deserialized.data)
                             {
-                                Console.WriteLine("-------------------");
-                                sessionId = item.id;
-                                Console.WriteLine(item.id);
+                                if (item.clientinfo.user == Environment.UserName)
+                                {
+                                    Console.WriteLine("-------------------");
+                                    sessionId = item.id;
+                                    Console.WriteLine(item.id);
+                                }
                             }
-                        }
+                            break;
+                        case "tunnel/create":
+                            tunnelId = deserialized.data.id;
+                            Console.WriteLine(tunnelId);
+                            break;
+                        case "tunnel/send":
+                            if (deserialized.data.data.id == "scene/get")
+                            {
+                                Uuids.Clear();
+                                foreach (var item in deserialized.data.data.data.children)
+                                {
+                                    if (!Uuids.ContainsKey((string)item.name))
+                                        Uuids.Add((string)item.name, (string)item.uuid);
+                                }
+                                foreach (KeyValuePair<string, string> kvp in Uuids)
+                                {
+                                    //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                                    Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                                }
+                            }
+                            else if (deserialized.data.data.id == "scene/node/add") {
+                                Uuids.Add((string)deserialized.data.data.data.name, (string)deserialized.data.data.data.uuid);
+                            } else if (deserialized.data.data.id == "route/add") {
+                                int routeCount = 0;
+                                Uuids.Add("Route" + routeCount , (string)deserialized.data.data.data.uuid);
+                                routeCount++;
+                            }
+                            break;
+                        case "scene/get":
+                            sceneJson = deserialized.data;
+                            Console.WriteLine(sceneJson);
+                            break;
+                        case "scene/node/add":
+                            Uuids.Add(deserialized.data.name, deserialized.data.uuid);
+                            foreach (KeyValuePair<string, string> kvp in Uuids)
+                            {
+                                //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                                Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                    else if (deserialized.id == "tunnel/create")
-                    {
-                        tunnelId = deserialized.data.id;
-                        Console.WriteLine(tunnelId);
-                    }
-                    else if (deserialized.id == "scene/get")
-                    {
-                        sceneJson = deserialized.data;
-                        Console.WriteLine(sceneJson);
-                    }
-                    else if (deserialized.id == "scene/reset")
-                    {
-                        //TODO * 
-                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/reset'");
-                    }
-                    else if (deserialized.id == "scene/save")
-                    {
-                        //TODO * 
-                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/save'");
-                    }
-                    else if (deserialized.id == "scene/load")
-                    {
-                        //TODO * 
-                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/load'");
-                    }
-                    else if (deserialized.id == "scene/raycast")
-                    {
-                        //TODO * 
-                        Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/raycast'");
-                    }
+
+
+                    //else if (deserialized.data.data.id == "route/add")
+                    //{
+                    //    routeUuid = deserialized.data.data.data.uuid;
+                    //    Console.WriteLine("Route uuid: " + routeUuid);
+                    //}
+                    //else if (deserialized.data.data.id == "scene/node/add")
+                    //{
+                    //    steveUuid = deserialized.data.data.data.uuid;
+                    //    Console.WriteLine("Steve uuid: " + steveUuid);
+                    //}
+
+                    //else if (deserialized.id == "scene/reset")
+                    //{
+                    //    //TODO * 
+                    //    Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/reset'");
+                    //}
+                    //else if (deserialized.id == "scene/save")
+                    //{
+                    //    //TODO * 
+                    //    Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/save'");
+                    //}
+                    //else if (deserialized.id == "scene/load")
+                    //{
+                    //    //TODO * 
+                    //    Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/load'");
+                    //}
+                    //else if (deserialized.id == "scene/raycast")
+                    //{
+                    //    //TODO * 
+                    //    Console.WriteLine("Invoked TODO ListenThread()>'(deserialized.id == 'scene/raycast'");
+                    //}
                     /*TODO: 
                     - node add 
                     - update node 
@@ -142,16 +191,7 @@ namespace TcpClient
                     */
 
 
-                    else if (deserialized.data.data.id == "route/add")
-                    {
-                        routeUuid = deserialized.data.data.data.uuid;
-                        Console.WriteLine("Route uuid: " + routeUuid);
-                    }
-                    else if (deserialized.data.data.id == "scene/node/add")
-                    {
-                        steveUuid = deserialized.data.data.data.uuid;
-                        Console.WriteLine("Steve uuid: " + steveUuid);
-                    }
+
                 }
             }
         }
@@ -191,9 +231,13 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.debugRoute(true));
                     break;
                 case 'h':
-                    json = encapsulatePacket(EngineInteraction.addRoad(routeUuid, 0.01));
+
+                    Uuids.TryGetValue("Route0", out string routeID);
+                    json = encapsulatePacket(EngineInteraction.addRoad(routeID, 0.5));
                     break;
                 case 'k':
+                    Console.WriteLine("Insert name");
+                    string name = Console.ReadLine();
                     Console.WriteLine("Insert scale");
                     double scale = double.Parse(Console.ReadLine());
                     Console.WriteLine("Insert x");
@@ -202,14 +246,18 @@ namespace TcpClient
                     double y = double.Parse(Console.ReadLine());
                     Console.WriteLine("Insert z");
                     double z = double.Parse(Console.ReadLine());
-                    json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(scale, x, y, z));
+                    json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(scale, x, y, z, name));
                     break;
                 case 'l':
                     json = encapsulatePacket(EngineInteraction.removeLastSteve(steveUuid));
                     Console.WriteLine(json);
                     break;
                 case 'm':
-                    json = encapsulatePacket(EngineInteraction.followRoute(routeUuid,steveUuid));
+                    Console.WriteLine("What Steve?");
+                    string SteveName = Console.ReadLine();
+                    Uuids.TryGetValue(SteveName, out string steveID);
+                    Uuids.TryGetValue("Route0", out string routeID2);
+                    json = encapsulatePacket(EngineInteraction.followRoute(routeID2, steveID));
                     Console.WriteLine(json);
                     break;
                 case 'n':
@@ -217,9 +265,16 @@ namespace TcpClient
                     Console.WriteLine(json);
                     break;
                 case 'o':
+                    Console.WriteLine("What Steve?");
+                    string SteveName2 = Console.ReadLine();
                     Console.WriteLine("Insert speed");
                     double speed = double.Parse(Console.ReadLine());
-                    json = encapsulatePacket(EngineInteraction.updateFollowRouteSpeed(steveUuid,speed));
+                    Uuids.TryGetValue(SteveName2, out string steveID2);
+                    json = encapsulatePacket(EngineInteraction.updateFollowRouteSpeed(steveID2, speed));
+                    Console.WriteLine(json);
+                    break;
+                case 'p':
+                    json = encapsulatePacket(EngineInteraction.getScene());
                     Console.WriteLine(json);
                     break;
                 default:
@@ -377,7 +432,7 @@ namespace TcpClient
                     {
                         transform = new
                         {
-                            position = new[] { 0, 0, 0 },
+                            position = new[] { -128, 0, -128 },
                             scale = 1,
                             rotation = new[] { 0, 0, 0 }
                         },
@@ -385,6 +440,12 @@ namespace TcpClient
                         {
                             smoothnormals = true
 
+                        },
+                        model = new
+                        {
+                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            animated = false,
+                            animation = "animationname"
                         }
                     }
                 }
@@ -558,10 +619,10 @@ namespace TcpClient
                 id = "scene/panel/drawtext",
                 data = new
                 {
-                    id = nodeID, 
-                    text = text_, 
-                    position = positionXY, 
-                    size = size_, 
+                    id = nodeID,
+                    text = text_,
+                    position = positionXY,
+                    size = size_,
                     color = colorsARGB
                 }
             };
@@ -574,9 +635,9 @@ namespace TcpClient
                 id = "scene/panel/image",
                 data = new
                 {
-                    id = nodeID, 
-                    image = imagePNG, 
-                    position = positionXY, 
+                    id = nodeID,
+                    image = imagePNG,
+                    position = positionXY,
                     size = sizeXY
                 }
             };
@@ -592,7 +653,7 @@ namespace TcpClient
 
             for (int i = 0; i < 65536; i++)
             {
-                heightMap[i] = random.Next(0, 2);
+                heightMap[i] = random.NextDouble() * 0.2;
             }
             return new
             {
@@ -789,10 +850,10 @@ namespace TcpClient
                     node = nodeid, // this can be any value?
                     speed = 10.0, // the speed of the node
                     offset = 0.0, // the offset of the node, 0.0 means the node moves exactly one the line other values mean its off.
-                    rotate = "NONE", // can be set to NONE, XZ or XYZ
+                    rotate = "XYZ", // can be set to NONE, XZ or XYZ
                     smoothing = 1.0, // how smooth the node moves on the route?
                     followheigth = true, //set bool to follow the terrain height
-                    rotateOffset = new[] { 0, 0, 0 },
+                    rotateOffset = new[] { 0, Math.PI/180 * 90, 0 },
                     positionOffset = new[] { 0, 0, 0 }
                 }
             };
@@ -838,14 +899,14 @@ namespace TcpClient
         #endregion
 
         #region Other 
-        public static object addEbicMinecraftSteve(double scale, double x, double y, double z)
+        public static object addEbicMinecraftSteve(double scale, double x, double y, double z, string name)
         {
             return new
             {
                 id = "scene/node/add",
                 data = new
                 {
-                    name = "Steve",
+                    name = name,
                     components = new
                     {
                         transform = new
