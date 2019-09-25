@@ -216,7 +216,12 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.resetScene());
                     Console.WriteLine(json);
                     break;
-
+                case 'o':
+                    Console.WriteLine("Insert speed");
+                    double speed = double.Parse(Console.ReadLine());
+                    json = encapsulatePacket(EngineInteraction.updateFollowRouteSpeed(steveUuid,speed));
+                    Console.WriteLine(json);
+                    break;
                 default:
                     sendMessage = false;
                     Console.WriteLine("Wrong char");
@@ -245,6 +250,7 @@ namespace TcpClient
             Console.WriteLine("L: Remove epic minecraft steve:(");
             Console.WriteLine("M: Make Steve follow the route:(");
             Console.WriteLine("N: Reset scene:(");
+            Console.WriteLine("O: Change route speed");
 
             Console.WriteLine("======================================");
         }
@@ -870,14 +876,6 @@ namespace TcpClient
                 {
                     id = uuid
                 }
-            };
-        }
-
-        public static object resetScene()
-        {
-            return new
-            {
-                id = "scene/reset"
             };
         }
         #endregion
