@@ -1,23 +1,51 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.645
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29318.209
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthCare", "RemoteHealthCare\RemoteHealthCare.csproj", "{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RHCCore", "RHCCore\RHCCore.shproj", "{4903A540-18AB-4A2C-AAFD-E460791447C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RHCServer", "RHCServer\RHCServer.csproj", "{202DF856-3939-44B8-8516-02E422ED646E}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		RHCCore\RHCCore.projitems*{4903a540-18ab-4a2c-aafd-e460791447c4}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 		SIMULATOR|Any CPU = SIMULATOR|Any CPU
+		SIMULATOR|x64 = SIMULATOR|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Debug|x64.Build.0 = Debug|Any CPU
 		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Release|x64.ActiveCfg = Release|Any CPU
+		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.Release|x64.Build.0 = Release|Any CPU
 		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.SIMULATOR|Any CPU.ActiveCfg = SIMULATOR|Any CPU
 		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.SIMULATOR|Any CPU.Build.0 = SIMULATOR|Any CPU
+		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.SIMULATOR|x64.ActiveCfg = SIMULATOR|Any CPU
+		{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}.SIMULATOR|x64.Build.0 = SIMULATOR|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.Debug|x64.ActiveCfg = Debug|x64
+		{202DF856-3939-44B8-8516-02E422ED646E}.Debug|x64.Build.0 = Debug|x64
+		{202DF856-3939-44B8-8516-02E422ED646E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.Release|x64.ActiveCfg = Release|x64
+		{202DF856-3939-44B8-8516-02E422ED646E}.Release|x64.Build.0 = Release|x64
+		{202DF856-3939-44B8-8516-02E422ED646E}.SIMULATOR|Any CPU.ActiveCfg = Debug|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.SIMULATOR|Any CPU.Build.0 = Debug|Any CPU
+		{202DF856-3939-44B8-8516-02E422ED646E}.SIMULATOR|x64.ActiveCfg = Release|x64
+		{202DF856-3939-44B8-8516-02E422ED646E}.SIMULATOR|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
