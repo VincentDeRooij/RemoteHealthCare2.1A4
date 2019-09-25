@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -11,15 +12,15 @@ namespace RHCCore.Networking
 {
     public class NetworkConnection : IConnection
     {
-        private readonly NetworkStream networkStream;
-        private readonly object networkLock;
+        private NetworkStream networkStream;
+        private object networkLock;
 
         private byte[] lastMessage;
         public byte[] LastMessage => lastMessage;
 
         private bool active = false;
 
-        private readonly IPEndPoint remoteEndPoint;
+        private IPEndPoint remoteEndPoint;
         public IPEndPoint RemoteEndPoint => remoteEndPoint;
 
         public event IConnection.ConnectionEventHandler OnReceived;
@@ -27,14 +28,23 @@ namespace RHCCore.Networking
         public event IConnection.ConnectionEventHandler OnDisconnected;
         public event IConnection.ConnectionEventHandler OnError;
 
-        public NetworkConnection(ref NetworkStream networkStream, IPEndPoint remoteEndPoint)
+        public bool Init(ref NetworkStream networkStream, IPEndPoint remoteEndPoint)
         {
-            this.networkLock = new object();
-            this.networkStream = networkStream;
-            new Thread(Receive).Start();
-            this.remoteEndPoint = remoteEndPoint;
-            active = true;
-            OnSuccessfulConnection?.Invoke(this, null);
+            try
+            {
+                this.networkLock = new object();
+                this.networkStream = networkStream;
+                new Thread(Receive).Start();
+                this.remoteEndPoint = remoteEndPoint;
+                active = true;
+                OnSuccessfulConnection?.Invoke(this, null);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+            }
+
+            return active;
         }
 
         public void Write(string data)

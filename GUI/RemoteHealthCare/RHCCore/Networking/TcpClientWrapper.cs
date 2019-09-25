@@ -37,12 +37,47 @@ namespace RHCCore.Networking
                     this.client = new TcpClient();
                     this.client.Connect(endPoint);
                     NetworkStream networkStream = this.client.GetStream();
-                    this.networkConnection = new NetworkConnection(ref networkStream, (IPEndPoint)client.Client.RemoteEndPoint);
+                    this.networkConnection = new NetworkConnection();
                     this.networkConnection.OnSuccessfulConnection   += (x, y) => OnClientConnected?.Invoke(x, y);
                     this.networkConnection.OnError                  += (x, y) => OnError?.Invoke(x, y);
                     this.networkConnection.OnReceived               += (x, y) => OnReceived?.Invoke(x, y);
                     this.networkConnection.OnDisconnected           += (x, y) => OnClientDisconnected?.Invoke(x, y);
-                    this.active = true;
+
+                    bool authrequested = false;
+                    ManualResetEvent resetEvent = new ManualResetEvent(false);
+                    this.networkConnection.OnReceived += (x, y) =>
+                    {
+                        if (Encoding.UTF8.GetString(y) == "AUTH")
+                        {
+                            x.Write(new byte[] { 0x1, 0x32, 0x11, 0x42, 0x11, 0x11, 0x9, 0x29 });
+                            authrequested = true;
+                            resetEvent.Set();
+                        }
+                    };
+                    this.networkConnection.Init(ref networkStream, (IPEndPoint)client.Client.RemoteEndPoint);
+                    try
+                    {
+                        resetEvent.WaitOne();
+                        if (authrequested)
+                        {
+                            resetEvent.Reset();
+                            this.networkConnection.OnReceived += (x, y) =>
+                            {
+                                if (Encoding.UTF8.GetString(y) == "AUTH-OK")
+                                {
+                                    active = true;
+                                    resetEvent.Set();
+                                }
+                            };
+                            resetEvent.WaitOne();
+                        }
+                        else
+                            this.Disconnect();
+                    }
+                    catch (AbandonedMutexException e)
+                    {
+
+                    }                    
                 }
                 catch (Exception e)
                 {

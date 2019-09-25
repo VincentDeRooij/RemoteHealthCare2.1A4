@@ -60,14 +60,50 @@ namespace RHCCore.Networking
             {
                 TcpClient client = await listener.AcceptTcpClientAsync();
                 NetworkStream clientStream = client.GetStream();
-                NetworkConnection connection = new NetworkConnection(ref clientStream, (IPEndPoint)client.Client.RemoteEndPoint);
-                connection.OnDisconnected       += (x, y) => OnClientDisconnected?.Invoke(x, y);
-                connection.OnError              += (x, y) => OnClientError?.Invoke(x, y);
-                connection.OnReceived           += (x, y) => OnClientDataReceived?.Invoke(x, y);
-                OnClientConnected?.Invoke(connection, null);
-                connectedClients.Add(connection);
+
+                ManualResetEvent resetEvent = new ManualResetEvent(false);
+                NetworkConnection connection = new NetworkConnection();
+                if (connection.Init(ref clientStream, (IPEndPoint)client.Client.RemoteEndPoint))
+                {
+                    connection.Write("AUTH");
+                    bool authenticated = false;
+                    connection.OnReceived += (x, y) => AuthenticateUser(x, y, ref resetEvent, out authenticated);
+                    resetEvent.WaitOne(1000);
+
+                    //Clean up event
+                    connection.OnReceived -= (x, y) => AuthenticateUser(x, y, ref resetEvent, out authenticated);
+
+                    if (authenticated)
+                    {
+                        connection.Write(Encoding.UTF8.GetBytes("AUTH-OK"));
+                        connection.OnDisconnected += (x, y) => OnClientDisconnected?.Invoke(x, y);
+                        connection.OnError += (x, y) => OnClientError?.Invoke(x, y);
+                        connection.OnReceived += (x, y) => OnClientDataReceived?.Invoke(x, y);
+                        OnClientConnected?.Invoke(connection, null);
+                        connectedClients.Add(connection);
+                    }
+                }
             }
             listener.Stop();
+        }
+
+        private void AuthenticateUser(IConnection connection, dynamic args, ref ManualResetEvent resetEvent, out bool authenticated)
+        {
+            try
+            {
+                byte[] authMessage = { 0x1, 0x32, 0x11, 0x42, 0x11, 0x11, 0x9, 0x29 };
+                if (Encoding.UTF8.GetString(args) == Encoding.UTF8.GetString(authMessage))
+                {
+                    authenticated = true;
+                    resetEvent.Set();
+                }
+                else authenticated = false;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                authenticated = false;
+            }
         }
     }
 }
