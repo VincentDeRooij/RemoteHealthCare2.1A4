@@ -1,8 +1,11 @@
-﻿using RHCCore.Networking;
+﻿using Pluralsight.Crypto;
+using RHCCore.Networking;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,6 +24,11 @@ namespace RHCClientExample
             {
                 //Het verkrijgen van gelezen data van de server naar client
                 tcpClientWrapper.NetworkConnection.OnReceived += NetworkConnection_OnReceived;
+                tcpClientWrapper.OnError += (x, e) =>
+                {
+                    Exception ex = (Exception)e;
+                    Console.WriteLine(ex.Message);
+                };
 
                 //Het schrijven van data naar de server d.m.v. bytes
                 tcpClientWrapper.NetworkConnection.Write(Encoding.ASCII.GetBytes("HALLO"));
@@ -29,10 +37,7 @@ namespace RHCClientExample
                 tcpClientWrapper.NetworkConnection.Write("HALLO");
 
                 //Zorgen dat het programma niet stopt met draaien
-                while (true)
-                {
-                    tcpClientWrapper.NetworkConnection.Write("HALLO");
-                }
+                Console.ReadKey();
 
                 //Disconnecten van de client
                 //tcpClientWrapper.Disconnect();
