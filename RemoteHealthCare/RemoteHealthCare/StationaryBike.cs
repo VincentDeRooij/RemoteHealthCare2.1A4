@@ -69,5 +69,9 @@ namespace RemoteHealthCare
         {
             this.DeviceDataChanged?.Invoke(this, null);
         }
+
+        public float getdistancetraveled() {
+            return distanceTravelled;
+        }
     }
 }
