@@ -16,7 +16,7 @@
         Background="{DynamicResource AppMainColor}"
         Foreground="{DynamicResource AppForegroundColor}"
         ResizeMode="CanResize"
-                      
+        
         SaveWindowPosition="True"
         WindowStartupLocation="CenterScreen"
                       

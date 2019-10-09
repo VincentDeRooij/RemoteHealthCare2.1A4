@@ -14,4 +14,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Networking\TcpClientWrapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\TcpServerWrapper.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Networking\cert.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Networking\cert.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
