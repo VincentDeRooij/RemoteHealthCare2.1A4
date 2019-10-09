@@ -3,22 +3,1007 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Threading;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace RemoteHealthCare
 {
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application
     {
+        public static System.Net.Sockets.TcpClient client;
+        public static NetworkStream stream;
+        public static string sessionId;
+        public static string tunnelId;
+        public static String sceneJson;
+        public static Dictionary<String, String> Uuids = new Dictionary<string, string>();
         public App()
             : base()
         {
 #if SIM
             Simulator.Simulator s = Simulator.Simulator.Instance;
 #endif
+            client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
+            stream = client.GetStream();
+
+            Thread listenThread = new Thread(ListenThread);
+            listenThread.Start();
+
+            sendAction(getSessions());
+            while (true)
+            {
+                if (sessionId != null)
+                {
+                    break;
+                }
+                Thread.Sleep(100);
+            }
+
+            sendAction(tunnelCreate());
+            while (true)
+            {
+                if (tunnelId != null)
+                {
+                    break;
+                }
+                Thread.Sleep(100);
+            }
+
+            Console.WriteLine("Enter a character to send a command");
+            while (true)
+            {
+                printMenu();
+                //char henk = Console.ReadLine().ToString().ToCharArray()[0];
+                char input = Console.ReadKey().KeyChar;
+                Console.WriteLine("");
+                chooseAction(input);
+            }
+        }
+        static void ListenThread()
+        {
+            while (true)
+            {
+                byte[] buffer = new byte[4];
+
+                int incomingBytes = stream.Read(buffer, 0, buffer.Length);
+                //Console.WriteLine($"Bytes from server: {incomingBytes}");
+                int packetLength = BitConverter.ToInt32(buffer, 0);
+                //Console.WriteLine($"PacketLength: {packetLength}");
+
+                byte[] totalBuffer = new byte[packetLength];
+                int msgPosition = 0;
+                while (msgPosition < packetLength)
+                {
+                    incomingBytes = stream.Read(totalBuffer, msgPosition, packetLength - msgPosition);
+                    msgPosition += incomingBytes;
+                }
+                string json = System.Text.Encoding.UTF8.GetString(totalBuffer, 0, packetLength);
+                Console.WriteLine(json);
+
+                dynamic deserialized = JsonConvert.DeserializeObject(json);
+
+                if (deserialized != null)
+                {
+                    switch ((string)deserialized.id)
+                    {
+                        case "session/list":
+                            foreach (var item in deserialized.data)
+                            {
+                                if (item.clientinfo.user == Environment.UserName)
+                                {
+                                    Console.WriteLine("-------------------");
+                                    sessionId = item.id;
+                                    Console.WriteLine(item.id);
+                                }
+                            }
+                            break;
+                        case "tunnel/create":
+                            tunnelId = deserialized.data.id;
+                            Console.WriteLine(tunnelId);
+                            break;
+                        case "tunnel/send":
+                            if (deserialized.data.data.id == "scene/get")
+                            {
+                                Uuids.Clear();
+                                foreach (var item in deserialized.data.data.data.children)
+                                {
+                                    if (!Uuids.ContainsKey((string)item.name))
+                                        Uuids.Add((string)item.name, (string)item.uuid);
+                                }
+                                foreach (KeyValuePair<string, string> kvp in Uuids)
+                                {
+                                    //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                                    Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                                }
+                            }
+                            else if (deserialized.data.data.id == "scene/node/add")
+                            {
+                                Uuids.Add((string)deserialized.data.data.data.name, (string)deserialized.data.data.data.uuid);
+                            }
+                            else if (deserialized.data.data.id == "route/add")
+                            {
+                                int routeCount = 0;
+                                Uuids.Add("Route" + routeCount, (string)deserialized.data.data.data.uuid);
+                                routeCount++;
+                            }
+                            break;
+                        case "scene/get":
+                            sceneJson = deserialized.data;
+                            Console.WriteLine(sceneJson);
+                            break;
+                        case "scene/node/add":
+                            Uuids.Add(deserialized.data.name, deserialized.data.uuid);
+                            foreach (KeyValuePair<string, string> kvp in Uuids)
+                            {
+                                //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                                Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        private static void chooseAction(char character)
+        {
+            character = char.ToLower(character);
+
+            string json = "temp";
+            bool sendMessage = true;
+            string routeName, objectName, routeUUID, objectUUID;
+
+
+            switch (character)
+            {
+                case 'a':
+                    {
+                        Console.WriteLine("Enter a time between 0 - 24");
+                        double time = double.Parse(Console.ReadLine());
+                        json = encapsulatePacket(EngineInteraction.setSkyBoxTime(time));
+                        Console.WriteLine(json);
+                        break;
+                    }
+                case 'b':
+                    {
+                        json = encapsulatePacket(EngineInteraction.addFlatTerrain());
+                        break;
+                    }
+                case 'c':
+                    {
+                        json = encapsulatePacket(EngineInteraction.addRandomTerrain());
+                        break;
+                    }
+                case 'd':
+                    {
+                        json = encapsulatePacket(EngineInteraction.deleteTerrain());
+                        break;
+                    }
+                case 'e':
+                    {
+                        json = encapsulatePacket(EngineInteraction.addTerrainNode());
+                        break;
+                    }
+                case 'f':
+                    {
+                        Console.WriteLine("Insert name");
+                        string name = Console.ReadLine();
+                        Uuids.TryGetValue("Camera", out string cameraUUID);
+                        json = encapsulatePacket(EngineInteraction.createPanel("panel", cameraUUID));
+                        Console.WriteLine(json);
+                        break;
+                    }
+                case 'g':
+                    {
+                        Uuids.TryGetValue("panel", out string panelUUID);
+                        json = encapsulatePacket(EngineInteraction.clearPanel(panelUUID));
+                        break;
+                    }
+                case 'h':
+                    {
+
+                        Uuids.TryGetValue("Route0", out routeUUID);
+                        json = encapsulatePacket(EngineInteraction.addRoad(routeUUID, 0.5));
+                        break;
+                    }
+                case 'i':
+                    {
+                        json = encapsulatePacket(EngineInteraction.createRoute(50, 50, 5, -5));
+                        break;
+                    }
+                case 'j':
+                    {
+                        json = encapsulatePacket(EngineInteraction.debugRoute(true));
+                        break;
+                    }
+                case 'k':
+                    {
+                        Console.WriteLine("Insert name");
+                        string name = Console.ReadLine();
+                        Console.WriteLine("Insert scale");
+                        double scale = double.Parse(Console.ReadLine());
+                        Console.WriteLine("Insert x");
+                        double x = double.Parse(Console.ReadLine());
+                        Console.WriteLine("Insert y");
+                        double y = double.Parse(Console.ReadLine());
+                        Console.WriteLine("Insert z");
+                        double z = double.Parse(Console.ReadLine());
+                        json = encapsulatePacket(EngineInteraction.addObject(scale, x, y, z, name));
+                        break;
+                    }
+                case 'l':
+                    {
+                        Console.WriteLine("Name of Object");
+                        objectName = Console.ReadLine();
+                        if (Uuids.TryGetValue(objectName, out objectUUID))
+                        {
+                            json = encapsulatePacket(EngineInteraction.removeObject(objectUUID));
+                            Uuids.Remove(objectName);
+                            Console.WriteLine(json);
+                        }
+                        break;
+                    }
+                case 'm':
+                    {
+                        Console.WriteLine("What Object?");
+                        objectName = Console.ReadLine();
+                        Console.WriteLine("What route?");
+                        routeName = Console.ReadLine();
+                        Uuids.TryGetValue(objectName, out objectUUID);
+                        Uuids.TryGetValue(routeName, out routeUUID);
+                        json = encapsulatePacket(EngineInteraction.followRoute(routeUUID, objectUUID));
+                        Console.WriteLine(json);
+                        break;
+                    }
+                case 'n':
+                    {
+                        json = encapsulatePacket(EngineInteraction.resetScene());
+                        Console.WriteLine(json);
+                        break;
+                    }
+                case 'o':
+                    {
+                        Console.WriteLine("What object?");
+                        objectName = Console.ReadLine();
+                        Console.WriteLine("Insert speed");
+                        double speed = double.Parse(Console.ReadLine());
+                        Uuids.TryGetValue(objectName, out objectUUID);
+                        json = encapsulatePacket(EngineInteraction.updateFollowRouteSpeed(objectUUID, speed));
+                        Console.WriteLine(json);
+                        break;
+                    }
+                case 'p':
+                    {
+                        json = encapsulatePacket(EngineInteraction.getScene());
+                        break;
+                    }
+                case 'q':
+                    {
+                        Uuids.TryGetValue("panel", out string panelUUID);
+                        json = encapsulatePacket(EngineInteraction.swapPanel(panelUUID));
+                        break;
+                    }
+                case 'r':
+                    {
+                        Uuids.TryGetValue("panel", out string panelUUID);
+                        json = encapsulatePacket(EngineInteraction.drawLinesPanel(panelUUID));
+                        break;
+                    }
+                case 's':
+                    {
+                        Uuids.TryGetValue("panel", out string panelUUID);
+                        json = encapsulatePacket(EngineInteraction.drawTextPanel(panelUUID));
+                        break;
+                    }
+                default:
+                    {
+                        sendMessage = false;
+                        Console.WriteLine("Wrong char");
+                        break;
+                    }
+            }
+
+            if (sendMessage)
+            {
+                sendAction(json);
+            }
+        }
+
+        private static void printMenu()
+        {
+            //Add your own commands
+            Console.WriteLine("======================================");
+            Console.WriteLine("A: Change Skybox Time");
+            Console.WriteLine("B: Add flat terrain");
+            Console.WriteLine("C: Add random height terrain");
+            Console.WriteLine("D: Delete terrain");
+            Console.WriteLine("E: Create terrain node");
+            Console.WriteLine("F: Create panel");
+            Console.WriteLine("G: Clear panel");
+            Console.WriteLine("H: Add new route");
+            Console.WriteLine("I: Create route nodes");
+            Console.WriteLine("J: Debug/show current route");
+            Console.WriteLine("K: Add object (steve)");
+            Console.WriteLine("L: Remove object");
+            Console.WriteLine("M: Make object follow the route");
+            Console.WriteLine("N: Reset scene");
+            Console.WriteLine("O: Change route speed");
+
+            Console.WriteLine("======================================");
+        }
+
+        private static void sendAction(string json)
+        {
+            byte[] prependBytes = BitConverter.GetBytes(json.Length);
+            byte[] databytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+            stream.Write(prependBytes, 0, prependBytes.Length);
+            stream.Write(databytes, 0, databytes.Length);
+        }
+        public static string getSessions()
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                id = "session/list"
+            });
+        }
+
+        #region Tunnel 
+        public static string tunnelCreate()
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                id = "tunnel/create",
+                data = new
+                {
+                    session = sessionId,
+                    key = ""
+                }
+
+            });
+        }
+
+        public static string encapsulatePacket(object json)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                id = "tunnel/send",
+                data = new
+                {
+                    dest = tunnelId,
+                    data =
+                        json
+
+                }
+            });
         }
     }
+    public class EngineInteraction
+    {
+
+        #region Scene 
+        public static object getScene()
+        {
+            return new
+            {
+                id = "scene/get"
+            };
+        }
+
+        public static object resetScene()
+        {
+            return new
+            {
+                id = "scene/reset"
+            };
+        }
+
+        public static object saveScene(bool overwrite_)
+        {
+            return new
+            {
+                id = "scene/save",
+                data = new
+                {
+                    filename = "cookie.json",
+                    overwrite = overwrite_
+                }
+            };
+        }
+
+        public static object loadScene()
+        {
+            return new
+            {
+                id = "scene/load",
+                data = new
+                {
+                    filename = "cookie.json"
+                }
+            };
+        }
+
+        public static object raycastScene(int[] startPosition, int[] directionPoint, bool physicsCheck)
+        {
+            return new
+            {
+                id = "scene/raycast",
+                data = new
+                {
+                    start = startPosition,
+                    direction = directionPoint,
+                    physics = physicsCheck.ToString().ToLower()
+                }
+            };
+        }
+
+        #region Node
+        public static object addTerrainNode()
+        {
+            return new
+            {
+                id = "scene/node/add",
+                data = new
+                {
+                    name = "terrain",
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { -128, 0, -128 },
+                            scale = 1,
+                            rotation = new[] { 0, 0, 0 }
+                        },
+                        terrain = new
+                        {
+                            smoothnormals = true
+
+                        },
+                        model = new
+                        {
+                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            animated = false,
+                            animation = "animationname"
+                        }
+                    }
+                }
+            };
+        }
+
+        public static object updateNode(string nodeID, string parentID, int[] position_, int scale_, int[] rotation_,
+            string animationName, double animationSpeed)
+        {
+            return new
+            {
+                id = "scene/node/update",
+                data = new
+                {
+                    id = nodeID,
+                    parent = parentID,
+                    transform = new
+                    {
+                        position = position_,
+                        scale = scale_,
+                        rotation = rotation_
+                    },
+                    animation = new
+                    {
+                        name = animationName,
+                        speed = animationSpeed
+                    }
+                }
+            };
+        }
+
+        public static object movetoNode(string nodeID, string stopMovement, int[] destinationPosition, string rotate_,
+            string interpolate_, bool followheight_, double speed_)
+        {
+            return new
+            {
+                id = "scene/node/moveto",
+                data = new
+                {
+                    id = nodeID,
+                    stop = stopMovement,
+                    position = destinationPosition,
+                    rotate = rotate_,
+                    interpolate = interpolate_,
+                    followheight = followheight_,
+                    speed = speed_
+                }
+            };
+        }
+
+        public static object deleteNode(string nodeID)
+        {
+            return new
+            {
+                id = "scene/node/delete",
+                data = new
+                {
+                    id = nodeID
+                }
+            };
+        }
+
+        public static object findNode(string nodeName)
+        {
+            return new
+            {
+                id = "scene/node/find",
+                data = new
+                {
+                    name = nodeName
+                }
+            };
+        }
+
+        public static object addLayer(string nodeID, string diffuseTexturePNG, string normalTexturePNG,
+            int minHeight_, int maxHeight_, int fadeDist_)
+        {
+            return new
+            {
+                id = "scene/node/addlayer",
+                data = new
+                {
+                    id = nodeID,
+                    diffuse = diffuseTexturePNG,
+                    normal = normalTexturePNG,
+                    minHeight = minHeight_,
+                    maxHeight = maxHeight_,
+                    fadeDist = fadeDist_
+                }
+            };
+        }
+
+        public static object dellayer()
+        {
+            return new
+            {
+                id = "scene/node/dellayer",
+                data = new
+                {
+
+                }
+            };
+        }
+
+        #endregion
+
+        #region Panel
+
+        public static object createPanel(string name, string parent)
+        {
+            return new
+            {
+                id = "scene/node/add",
+                data = new
+                {
+                    name = name,
+                    parent = parent,
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { 2, 1, 2 },
+                            rotation = new[] { 0, 0, 0 },
+                            scale = 1
+                        },
+                        panel = new
+
+                        {
+                            size = new[] { 1, 1 },
+                            resolution = new[] { 512, 512 },
+                            background = new[] { 0,0,0, 1 },
+                            castShadow = true
+                        }
+
+                    }
+                }
+
+            };
+
+        }
+        public static object clearPanel(string nodeID)
+        {
+            return new
+            {
+                id = "scene/panel/clear",
+                data = new
+                {
+                    id = nodeID
+                }
+            };
+        }
+
+        public static object swapPanel(string nodeID)
+        {
+            return new
+            {
+                id = "scene/panel/swap",
+                data = new
+                {
+                    id = nodeID
+                }
+            };
+        }
+
+        public static object drawLinesPanel(string nodeID)
+        {
+            return new
+            {
+                id = "scene/panel/drawlines",
+                data = new
+                {
+                    id = nodeID,
+                    width = 10,
+                    lines = new []
+                    {
+                        new [] { 0,0, 512,512, 1,1,1,1 },
+                        new [] { 0, 512, 512, 0, 1,1,1,1 },
+                        new [] { 256, 0, 256, 512, 1,1,1,1 },
+                        new [] { 0, 256, 512, 256, 1,1,1,1 },
+                        /*
+                        TODO:
+                        [ 0,0, 10,10, 0,0,0,1, // x1,y1, x2,y2, r,g,b,a ],
+                        [0, 0, 100, 10, 0, 0, 0, 1, // x1,y1, x2,y2, r,g,b,a ]
+                        */
+                    }
+                }
+            };
+        }
+
+        public static object setClearColorPanel(string nodeID, int[] colorsARGB)
+        {
+            return new
+            {
+                id = "scene/panel/setclearcolor",
+                data = new
+                {
+                    id = nodeID,
+                    color = colorsARGB
+                }
+            };
+        }
+
+        public static object drawTextPanel(string nodeID)
+        {
+            return new
+            {
+                id = "scene/panel/drawtext",
+                data = new
+                {
+                    id = nodeID,
+                    text = "Pascal is gay",
+                    position = new[] { 100, 180 },
+                    size = 70,
+                    color = new[] {0.8f,0.2f,0.8f,1 }
+                }
+            };
+        }
+
+        public static object imagePanel(string nodeID, string imagePNG, double[] positionXY, double[] sizeXY)
+        {
+            return new
+            {
+                id = "scene/panel/image",
+                data = new
+                {
+                    id = nodeID,
+                    image = imagePNG,
+                    position = positionXY,
+                    size = sizeXY
+                }
+            };
+        }
+
+        #endregion
+
+        #region Terrain 
+        public static object addRandomTerrain()
+        {
+            double[] heightMap = new double[65536];
+            Random random = new Random();
+
+            for (int i = 0; i < 65536; i++)
+            {
+                heightMap[i] = random.NextDouble() * 0.2;
+            }
+            return new
+            {
+                id = "scene/terrain/add",
+                data = new
+                {
+                    size = new[] { 256, 256 },
+                    heights = heightMap
+                }
+            };
+        }
+
+        public static object addFlatTerrain()
+        {
+            int[] heightMap = new int[65536];
+
+            for (int i = 0; i < 65536; i++)
+            {
+                heightMap[i] = 0;
+            }
+            return new
+            {
+                id = "scene/terrain/add",
+                data = new
+                {
+                    size = new[] { 256, 256 },
+                    heights = heightMap
+                }
+            };
+        }
+
+        public static object updateTerrain()
+        {
+
+            return new
+            {
+                id = "scene/terrain/update",
+                data = new
+                {
+
+                }
+            };
+        }
+
+        public static object deleteTerrain()
+        {
+            return new
+            {
+                id = "scene/terrain/delete",
+                data = new
+                {
+
+                }
+            };
+        }
+
+
+
+        #endregion
+
+        #region Skybox 
+        public static object setSkyBoxTime(double time_)
+        {
+            return new
+            {
+                id = "scene/skybox/settime",
+                data = new
+                {
+                    time = time_
+                }
+            };
+        }
+
+        public static object updateSkyBoxTime(double t)
+        {
+            //TODO *
+            return null;
+            Console.WriteLine("Invoked TODO Method>'updateSkyBoxTime(double t)'");
+        }
+
+        #endregion
+
+        #region Road 
+
+        public static object addRoad(string routeUuid, double hightOffset)
+        {
+            return new
+            {
+                id = "scene/road/add",
+                data = new
+                {
+                    route = routeUuid,
+                    diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
+                    normal = "data/NetworkEngine/textures/tarmac_normale.png",
+                    specular = "data/NetworkEngine/textures/tarmac_specular.png",
+                    heightoffset = hightOffset
+                }
+            };
+        }
+
+        public static object updateRoad(string routeUuid, double hightOffset)
+        {
+            return new
+            {
+                id = "scene/road/update",
+                data = new
+                {
+                    route = routeUuid,
+                    diffuse = "data/NetworkEngine/textures/tarmac_diffuse.png",
+                    normal = "data/NetworkEngine/textures/tarmac_normale.png",
+                    specular = "data/NetworkEngine/textures/tarmac_specular.png",
+                    heightoffset = hightOffset
+                }
+            };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Route 
+        // Creates 4 route nodes according to the parameters set
+        // where p1 & p2 are positions so p1=50 & p2=50 means you get a square shaped route 
+        // where t1 & t2 are direction, the directions mean the shaping of the route, if the directions are t1 = 0 & t2 = 0. You get straight lines
+        // so when you want a smoother route tweak the t1 & t2 parameters.
+        public static object createRoute(int p1, int p2, int t1, int t2)
+        {
+            return new
+            {
+                id = "route/add",
+                data = new
+                {
+                    nodes = new[]
+                    {
+                        new { pos = new[] { 0,0,0 },
+                        dir = new[] { t1,0,t2 } },
+
+                        new { pos = new[] { p1,0,0 },
+                        dir = new[] { t1,0,t1 } },
+
+                        new { pos = new[] { p1,0,p2 },
+                        dir = new[] { t2,0,t1 } },
+
+                        new { pos = new[] { 0,0,p2 },
+                        dir = new[] { t2,0,t2 } }
+                    }
+                }
+            };
+        }
+        // updates the 4 route nodes according to the parameters set
+        // where p1 & p2 are positions so p1=50 & p2=50 means you get a square shaped route 
+        // where t1 & t2 are direction, the directions mean the shaping of the route, if the directions are t1 = 0 & t2 = 0. You get straight lines
+        // so when you want a smoother route tweak the t1 & t2 parameters.
+        //  
+        // the uuid is the route id. 
+        public static object updateRoute(string uuid, int p1, int p2, int t1, int t2)
+        {
+            return new
+            {
+                id = "route/update",
+                data = new
+                {
+                    id = uuid,
+                    nodes = new[]
+                    {
+                        new { index = 0,
+                        pos = new[] { 0,0,0 },
+                        dir = new[] { t1,0,t2 } },
+
+                        new { index = 1,
+                        pos = new[] { p1,0,0 },
+                        dir = new[] { t1,0,t1 } },
+
+                        new { index = 2,
+                        pos = new[] { p1,0,p2 },
+                        dir = new[] { t2,0,t1 } },
+
+                        new { index = 3,
+                        pos = new[] { 0,0,p2 },
+                        dir = new[] { t2,0,t2 } }
+                    }
+                }
+            };
+        }
+
+        public static object followRoute(string uuid, string nodeid) // makes a node follow a route
+        {
+            return new
+            {
+                id = "route/follow",
+                data = new
+                {
+                    route = uuid, // route id
+                    node = nodeid, // this can be any value?
+                    speed = 10.0, // the speed of the node
+                    offset = 0.0, // the offset of the node, 0.0 means the node moves exactly one the line other values mean its off.
+                    rotate = "XYZ", // can be set to NONE, XZ or XYZ
+                    smoothing = 1.0, // how smooth the node moves on the route?
+                    followheigth = true, //set bool to follow the terrain height
+                    rotateOffset = new[] { 0, Math.PI / 180 * 90, 0 },
+                    positionOffset = new[] { 0, 0, 0 }
+                }
+            };
+        }
+
+        public static object updateFollowRouteSpeed(string nodeid, double newSpeed) // changes a given node speed
+        {
+            return new
+            {
+                id = "route/follow/speed",
+                data = new
+                {
+                    node = nodeid, // the value of the given node
+                    speed = newSpeed // the speed of the node
+                }
+            };
+        }
+
+        public static object removeRoute(string uuid)
+        {
+            return new
+            {
+                id = "route/delete",
+                data = new
+                {
+                    id = uuid // deletes the route with the given uuid
+                }
+            };
+        }
+
+        public static object debugRoute(bool show)
+        {
+            return new
+            {
+                id = "route/show",
+                data = new
+                {
+                    show = show
+                }
+            };
+        }
+
+        #endregion
+
+        #region Other 
+        public static object addObject(double scale, double x, double y, double z, string name)
+        {
+            return new
+            {
+                id = "scene/node/add",
+                data = new
+                {
+                    name = name,
+                    components = new
+                    {
+                        transform = new
+                        {
+                            position = new[] { x, y, z },
+                            rotation = new[] { 0, 0, 0 },
+                            scale = scale
+                        },
+                        model = new
+                        {
+                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            animated = false,
+                            animation = "animationname"
+                        }
+
+                    }
+                }
+
+            };
+        }
+
+        public static object removeObject(string uuid)
+        {
+            return new
+            {
+                id = "scene/node/delete",
+                data = new
+                {
+                    id = uuid
+                }
+            };
+        }
+        #endregion
+
+    }
+
+    #endregion
 }

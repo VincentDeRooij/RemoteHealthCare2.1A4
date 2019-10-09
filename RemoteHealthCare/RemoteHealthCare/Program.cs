@@ -16,7 +16,7 @@ namespace RemoteHealthCare
     {
         private static Dictionary<BLE, IDevice> connectedDevices;
 
-        public static async Task NoMain(string[] args)
+        public static async Task Main(string[] args)
         {
             connectedDevices = new Dictionary<BLE, IDevice>();
 
@@ -39,8 +39,8 @@ namespace RemoteHealthCare
             await Task.Delay(1000);
             #endif
 
-            //await AddDeviceAsync("Tacx Flux 01140", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", EDeviceType.StationaryBike);
-            await AddDeviceAsync("Decathlon Dual HR", "HeartRate", "HeartRateMeasurement", EDeviceType.HeartRateMonitor);
+            await AddDeviceAsync("Tacx Flux 01140", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", EDeviceType.StationaryBike);
+            //await AddDeviceAsync("Decathlon Dual HR", "HeartRate", "HeartRateMeasurement", EDeviceType.HeartRateMonitor);
 
 #endif
 
