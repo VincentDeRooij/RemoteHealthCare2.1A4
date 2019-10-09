@@ -87,14 +87,11 @@ namespace RHCCore.Networking
                     if (receivingByteSize <= 0)
                         break;
 
-                    Thread.Sleep(100);
-
                     byte[] networkMessage = new byte[receivingByteSize];
                     networkStream.Read(networkMessage, 0, networkMessage.Length);
 
                     lastMessage = networkMessage;
                     OnReceived?.Invoke(this, networkMessage);
-                    Thread.Sleep(1);
                 }
             }
             catch (Exception e)
