@@ -7,7 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthCare", "RemoteH
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualReality", "VirtualReality\VirtualReality.csproj", "{AA7771A4-E748-419E-907D-A84DCE248042}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RHCCore", "..\GUI\RemoteHealthCare\RHCCore\RHCCore.shproj", "{4903A540-18AB-4A2C-AAFD-E460791447C4}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\GUI\RemoteHealthCare\RHCCore\RHCCore.projitems*{3bd64afc-4e82-4658-b083-7a2f7ee41685}*SharedItemsImports = 4
+		..\GUI\RemoteHealthCare\RHCCore\RHCCore.projitems*{4903a540-18ab-4a2c-aafd-e460791447c4}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_SIMULATOR|Any CPU = Debug_SIMULATOR|Any CPU
 		Debug|Any CPU = Debug|Any CPU

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Threading;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Drawing;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace TcpClient
 {
@@ -16,6 +14,7 @@ namespace TcpClient
         public static string tunnelId;
         public static string routeUuid;
         public static string steveUuid;
+        public static string groundPlaneid;
         public static string headUuid;
         private static IFormatProvider result;
         public static String sceneJson;
@@ -249,7 +248,10 @@ namespace TcpClient
                     json = encapsulatePacket(EngineInteraction.addEbicMinecraftSteve(scale, x, y, z, name));
                     break;
                 case 'l':
-                    json = encapsulatePacket(EngineInteraction.removeLastSteve(steveUuid));
+                    Console.WriteLine("What node?");
+                    string nodeName = Console.ReadLine();
+                    Uuids.TryGetValue(nodeName, out string uuid);
+                    json = encapsulatePacket(EngineInteraction.deleteNode(uuid));
                     Console.WriteLine(json);
                     break;
                 case 'm':
@@ -275,6 +277,14 @@ namespace TcpClient
                     break;
                 case 'p':
                     json = encapsulatePacket(EngineInteraction.getScene());
+                    Console.WriteLine(json);
+                    break;
+                 case 'q':
+                    json = encapsulatePacket(EngineInteraction.removeGroundPane(groundPlaneid));
+                    Console.WriteLine(json);
+                    break;
+                case 'R':
+                    json = encapsulatePacket(EngineInteraction.addSpicyTerrain());
                     Console.WriteLine(json);
                     break;
                 default:
@@ -306,6 +316,9 @@ namespace TcpClient
             Console.WriteLine("M: Make Steve follow the route:(");
             Console.WriteLine("N: Reset scene:(");
             Console.WriteLine("O: Change route speed");
+            Console.WriteLine("P: Get scene");
+            Console.WriteLine("Q: Remove groundPLane");
+            Console.WriteLine("R: Add spicy terrain");
 
             Console.WriteLine("======================================");
         }
@@ -443,7 +456,7 @@ namespace TcpClient
                         },
                         model = new
                         {
-                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            file = "data/NetworkEngine/models/houses/set1/house1.obj",
                             animated = false,
                             animation = "animationname"
                         }
@@ -673,6 +686,24 @@ namespace TcpClient
             for (int i = 0; i < 65536; i++)
             {
                 heightMap[i] = 0;
+            }
+            return new
+            {
+                id = "scene/terrain/add",
+                data = new
+                {
+                    size = new[] { 256, 256 },
+                    heights = heightMap
+                }
+            };
+        }
+
+        public static object addSpicyTerrain() {
+            int[] heightMap = new int[65536];
+
+            for (int i = 0; i < 65536; i++)
+            {
+                heightMap[i] = new Random().Next(0, 5);
             }
             return new
             {
@@ -917,7 +948,7 @@ namespace TcpClient
                         },
                         model = new
                         {
-                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            file = "data/NetworkEngine/models/houses/set1/house2.obj",
                             animated = false,
                             animation = "animationname"
                         }
@@ -930,6 +961,17 @@ namespace TcpClient
 
         public static object removeLastSteve(string uuid)
         {
+            return new
+            {
+                id = "scene/node/delete",
+                data = new
+                {
+                    id = uuid
+                }
+            };
+        }
+
+        public static object removeGroundPane(string uuid) {
             return new
             {
                 id = "scene/node/delete",
