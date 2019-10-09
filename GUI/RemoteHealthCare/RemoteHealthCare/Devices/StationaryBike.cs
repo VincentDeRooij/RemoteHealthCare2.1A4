@@ -29,6 +29,8 @@ namespace RemoteHealthCare.Devices
         private int averageSpeed;
         public int AverageSpeed => averageSpeed;
 
+        public int CurrentRPM => lastBikeData.RPM;
+
         private float distanceTraveled;
         public float Distance => distanceTraveled;
 
@@ -84,7 +86,7 @@ namespace RemoteHealthCare.Devices
                         float dif = (generalData.Distance - lastGeneralData.Distance) / 1000.0f;
                         distanceTraveled += dif < 0 ? dif * -1 : dif;
                     }
-                    int currentSpeed = BitConverter.ToInt32(new byte[2] { lastGeneralData.PageData[5], lastGeneralData.PageData[4] }, 0);
+                    int currentSpeed = (generalData.PageData[5] << 8) | generalData.PageData[4];
                     this.currentSpeed = currentSpeed;
                     averageSpeed = ((averageSpeed * averageSpeedCounted) + currentSpeed) / ++averageSpeedCounted;
                     lastGeneralData = generalData;
@@ -93,7 +95,8 @@ namespace RemoteHealthCare.Devices
                 {
                     lastGeneralData = dataModel.DataPage as GeneralFEData;
                     averageSpeedCounted++;
-                    averageSpeed = BitConverter.ToInt32(new byte[2] { lastGeneralData.PageData[5], lastGeneralData.PageData[4] }, 0);
+                    currentSpeed = (lastGeneralData.PageData[5] << 8) | lastGeneralData.PageData[4];
+                    averageSpeed = currentSpeed;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData != null)
                 {

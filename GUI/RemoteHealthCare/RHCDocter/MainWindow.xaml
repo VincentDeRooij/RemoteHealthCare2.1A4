@@ -1,0 +1,14 @@
+﻿<Window x:Class="RHCDocter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RHCDocter"
+        mc:Ignorable="d"
+        Title="{Binding Path=Content.Title, ElementName=MainFrame}"
+        SizeToContent="WidthAndHeight">
+
+    <Grid>
+        <Frame Name="MainFrame" Source="Pages/LoginPage.xaml"/>
+    </Grid>
+</Window>
