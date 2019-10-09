@@ -27,32 +27,23 @@
 
                 <Border Grid.Column="0" Grid.Row="0" Height="35" Width="300">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Width="300">
-                        <Label VerticalAlignment="Center" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Content="Mike" Width="150" Padding="10, 5"/>
-                        <Label VerticalAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Right" Content="Status: Online/Offline  " Width="150" Padding="10, 5"/>
+                        <Label Name="ClientUserName"  VerticalAlignment="Center" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Width="150" Padding="10, 5"/>
+                        <Label VerticalAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Right" Content="Status:" Width="75" Padding="10, 5"/>
+                        <Label Name="ClientUserStatus" VerticalAlignment="Center" HorizontalAlignment="Right" HorizontalContentAlignment="Right" Content="" Width="75" Padding="10, 5"/>
                     </StackPanel>
                 </Border>
 
                 <Border Grid.Column="0" Grid.Row="1" Height="535" Width="300" >
                     <ScrollViewer Height="535" Width="300" VerticalScrollBarVisibility="Auto" Padding="5">
-                        <StackPanel Orientation="Vertical" >
-                            <Label MaxWidth="250" HorizontalAlignment="Left" Background="GhostWhite" BorderThickness="1" BorderBrush="DarkGray" Margin="0, 5">
-                                <TextBlock TextWrapping="WrapWithOverflow" Padding="5">
-                                    Message Client
-                                </TextBlock>
-                            </Label>
-                            <Label MaxWidth="250" HorizontalAlignment="Right" Background="LightGray" BorderThickness="1" BorderBrush="DarkGray" Margin="0, 5">
-                                <TextBlock TextWrapping="WrapWithOverflow" Padding="5">
-                                    Message Docter
-                                </TextBlock>
-                            </Label>
+                        <StackPanel Name="MessagesPanel" Orientation="Vertical" >
                         </StackPanel>
                     </ScrollViewer>
                 </Border>
 
                 <Border Grid.Column="0" Grid.Row="2" Height="30" Width="300">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Width="300">
-                        <TextBox VerticalAlignment="Center" HorizontalAlignment="Left" Height="30"  Width="250" Padding="5"/>
-                        <Button Click="Button_Click_Send" Content="Send" Height="30" Width="50" Padding="5"></Button>
+                        <TextBox Name="TXTBoxMessageSend" VerticalAlignment="Center" HorizontalAlignment="Left" Height="30"  Width="250" Padding="5"/>
+                        <Button Name="BTNSend" Click="Button_Click_Send" Content="Send" Height="30" Width="50" Padding="5"></Button>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -71,7 +62,7 @@
                     <ComboBoxItem >Archived Sessions</ComboBoxItem>
                 </ComboBox>
 
-                <StackPanel Grid.Column="0" Grid.Row="1" Name="CreateSessionPanel" Visibility="Visible" Orientation="Vertical" HorizontalAlignment="Stretch"  Height="570" Width="300">
+                <StackPanel Grid.Column="0" Grid.Row="1" Name="CreateSessionPanel" Visibility="Hidden" Orientation="Vertical" HorizontalAlignment="Stretch"  Height="570" Width="300">
                     <Grid VerticalAlignment="Center" HorizontalAlignment="Left" ShowGridLines="true" Height="540" Width="300">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -86,7 +77,7 @@
                         <Label Grid.Column="0" Grid.Row="2" Width="150">Time Session in minutes:</Label>
                         <TextBox Grid.Column="0" Grid.Row="3" Name="TXTBoxTimeSession" Width="150" TextChanged="TXTBoxTimeSession_OnTextChanged"></TextBox>
                     </Grid>
-                    <Button Click="Button_Click_Create" Height="30" Width="300" Margin="0">Create</Button>
+                    <Button Name="BTNCreate" Click="Button_Click_Create" Height="30" Width="300" Margin="0">Create</Button>
                 </StackPanel>
 
                 <StackPanel Grid.Column="0" Grid.Row="1" Name="ArchivedSessionPanel" Visibility="Hidden" Orientation="Vertical" HorizontalAlignment="Stretch" Width="300">
@@ -98,7 +89,7 @@
                             <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name4 : 10-10-2019 12:00</ListBoxItem>
                         </ListBox>
                     </Border>
-                    <Button Click="Button_Click_Confirm" Height="30" Width="300" Margin="0">Confirm</Button>
+                    <Button Name="BTNConfirm" Click="Button_Click_Confirm" Height="30" Width="300" Margin="0">Confirm</Button>
                 </StackPanel>
             </Grid>
             <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Width="300">
