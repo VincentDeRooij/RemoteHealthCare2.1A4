@@ -1,5 +1,8 @@
 ﻿#define MULTI_DEVICE
 
+
+using System.Data;
+using RHCCore.Networking;
 using Avans.TI.BLE;
 using libantplus.DataPages;
 using RemoteHealthCare.Devices;
@@ -9,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace RemoteHealthCare
 {
@@ -30,14 +34,18 @@ namespace RemoteHealthCare
                 simulator.ShowDialog();
             }).Start();
 
+            NetworkConectionHandler test = new NetworkConectionHandler("localhost");
+            test.sendData();
+
+
 #else
 
-            #if !MULTI_DEVICE
+#if !MULTI_DEVICE
             BLE connectiveBLE = new BLE();
             List<string> devices = connectiveBLE.ListDevices();
 
             await Task.Delay(1000);
-            #endif
+#endif
 
             await AddDeviceAsync("Tacx Flux 01140", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", "6e40fec1-b5a3-f393-e0a9-e50e24dcca9e", EDeviceType.StationaryBike);
             //await AddDeviceAsync("Decathlon Dual HR", "HeartRate", "HeartRateMeasurement", EDeviceType.HeartRateMonitor);
@@ -103,5 +111,6 @@ namespace RemoteHealthCare
         {
             connectedDevices[(BLE)sender].PushDataChange(e.Data);
         }
+
     }
 }
