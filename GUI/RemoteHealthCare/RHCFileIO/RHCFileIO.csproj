@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{AE08FB48-0A8E-4CA9-B2E3-757B9188214A}</ProjectGuid>
+    <ProjectGuid>{68B96A8F-3A17-436E-BE5C-0FA72D3A059A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>RHCFileIO</RootNamespace>
     <AssemblyName>RHCFileIO</AssemblyName>

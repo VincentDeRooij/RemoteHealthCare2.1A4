@@ -23,6 +23,7 @@ namespace FileManager
             DataOverview dataHH = data.GetPatientData("Harry Harolds");
             Console.WriteLine(dataHH.patientID);
             Console.ReadLine();
+
         }
     }
 }
