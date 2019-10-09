@@ -1,0 +1,28 @@
+﻿<Window x:Class="RemoteHealthCare.InlogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RemoteHealthCare"
+        mc:Ignorable="d"
+        Title="Client Login" Height="270" Width="500" WindowStartupLocation="CenterScreen"
+        FontSize="24">
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="BSN" Margin="0,10,0,10" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0" Foreground="White"/>
+        <TextBlock Text="Password" Margin="0,10,0,10" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="1" Foreground="White"/>
+
+        <TextBox Margin="0,10,0,10" x:Name="bsnInput" Grid.Column="1" Grid.Row="0" FontSize="24"/>
+        <TextBox Margin="0,10,0,10" x:Name="passwordInput" Grid.Column="1" Grid.Row="1" FontSize="24"/>
+
+        <Button Margin="0,20,0,0" Content="Log in" x:Name="btnLogin" Height="50" Grid.Column="1" Grid.Row="2" Width="100" Background="white"/>
+    </Grid>
+</Window>

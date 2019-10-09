@@ -19,6 +19,16 @@ namespace RemoteHealthCare.Devices
         private StationaryBikeData lastBikeData;
         private GeneralFEData lastGeneralData;
 
+        private int averageRPMCounted;
+        private int averageRPM;
+        private int AverageRPM => averageRPM;
+        private int currentSpeed;
+        public int CurrentSpeed => currentSpeed;
+
+        private int averageSpeedCounted;
+        private int averageSpeed;
+        public int AverageSpeed => averageSpeed;
+
         private float distanceTraveled;
         public float Distance => distanceTraveled;
 
@@ -32,6 +42,10 @@ namespace RemoteHealthCare.Devices
             : base()
         {
             distanceTraveled = 0f;
+            averageRPMCounted = 0;
+            averageRPM = 0;
+            averageSpeed = 0;
+            averageSpeedCounted = 0;
             this.deviceName = deviceName;
 #if !SIM
             Task.Run(async () =>
@@ -42,7 +56,7 @@ namespace RemoteHealthCare.Devices
             OnDeviceDataChanged();
         }
 
-        //~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
+        ~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
 
         private async Task SetupDevice(string deviceName)
         {
@@ -70,19 +84,28 @@ namespace RemoteHealthCare.Devices
                         float dif = (generalData.Distance - lastGeneralData.Distance) / 1000.0f;
                         distanceTraveled += dif < 0 ? dif * -1 : dif;
                     }
+                    int currentSpeed = BitConverter.ToInt32(new byte[2] { lastGeneralData.PageData[5], lastGeneralData.PageData[4] }, 0);
+                    this.currentSpeed = currentSpeed;
+                    averageSpeed = ((averageSpeed * averageSpeedCounted) + currentSpeed) / ++averageSpeedCounted;
                     lastGeneralData = generalData;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x10 && lastGeneralData == null)
                 {
                     lastGeneralData = dataModel.DataPage as GeneralFEData;
+                    averageSpeedCounted++;
+                    averageSpeed = BitConverter.ToInt32(new byte[2] { lastGeneralData.PageData[5], lastGeneralData.PageData[4] }, 0);
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData != null)
                 {
-                    lastBikeData = dataModel.DataPage as StationaryBikeData;
+                    StationaryBikeData bikeData = dataModel.DataPage as StationaryBikeData;
+                    averageRPM = ((averageRPM * averageRPMCounted) + bikeData.RPM) / ++averageRPMCounted;
+                    lastBikeData = bikeData;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData == null)
                 {
                     lastBikeData = dataModel.DataPage as StationaryBikeData;
+                    averageRPMCounted++;
+                    averageRPM = lastBikeData.RPM;
                 }
             }
             catch (InvalidCastException ex)
