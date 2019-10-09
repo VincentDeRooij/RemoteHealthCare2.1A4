@@ -48,7 +48,7 @@ namespace FileManager
             return dirPath;
         }
 
-        public int GetLastEntryNumber()
+        private int GetLastEntryNumber()
         {
             int parsedInt = 0;
             StreamReader reader;
@@ -80,11 +80,6 @@ namespace FileManager
             return parsedInt;
         }
 
-        public string GetLogPath()
-        {
-            return this.logPathOutput;
-        }
-
         public void NewLogFile(string newFile)
         {
             this.logPathOutput = Path.Combine(Directory.GetCurrentDirectory().Replace("Debug", "Logs"), newFile);
@@ -96,10 +91,9 @@ namespace FileManager
             return dirPath;
         }
 
-        public void WriteTextToFile(string filePath, string logString)
+        public void WriteLogText(string logString)
         {
             this.streamWriter = new StreamWriter(logPathOutput, true);
-            this.logPathOutput = filePath;
             this.logEntry = this.logNumber.ToString();
             this.dateTime = DateTime.Now.ToString() + ":   ";
             streamWriter.WriteLine("( " + this.logEntry + " )  " + this.dateTime + logString);
@@ -108,21 +102,17 @@ namespace FileManager
             this.logNumber++;
         }
 
-        public void WriteBytesToFile(string filePath, byte[] logBytes)
+        public static void TestLogWriter() 
         {
-            this.streamWriter = new StreamWriter(filePath, true);
-            this.logEntry = this.logNumber.ToString();
-            this.dateTime = DateTime.Now.ToString() + ":  ";
-            string data = Encoding.UTF8.GetString(logBytes);
-            streamWriter.WriteLine("( " + this.logEntry + " )  " + this.dateTime + data);
-            streamWriter.Close();
-            streamWriter.Flush();
-            this.logNumber++;
+            LogWriter logWriter = new LogWriter();
+            for (int i = 0; i < 100; i++)
+            {
+                logWriter.WriteLogText("Update: " + i); // writes as a test to the file for 100x
+                Console.WriteLine("Update: " + i);
+            }
         }
     }
-
     #endregion
-
-    }
+}
 
 

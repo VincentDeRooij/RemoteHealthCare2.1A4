@@ -47,10 +47,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BikeData.cs" />
-    <Compile Include="DataOverview.cs" />
+    <Compile Include="PatientData.cs" />
     <Compile Include="DataWriter.cs" />
     <Compile Include="HeartData.cs" />
-    <Compile Include="HistoryManager.cs" />
+    <Compile Include="PatientOverview.cs" />
     <Compile Include="LogWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

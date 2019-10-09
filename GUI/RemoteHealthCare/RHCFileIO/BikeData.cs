@@ -9,17 +9,11 @@ namespace FileManager
 {
     public class BikeData
     {
-        [JsonProperty]
         public List<int> averageRPM { get; set; }
-        [JsonProperty]
         public List<int> currentRPM { get; set; }
-        [JsonProperty]
         public List<int> torque { get; set; }
-        [JsonProperty]
         public List<int> distanceTraversed { get; set; }
-        [JsonProperty]
         public List<int> averageSpeed { get; set; }
-        [JsonProperty]
         public List<int> currentSpeed { get; set; }
 
         public BikeData()
@@ -44,32 +38,32 @@ namespace FileManager
             return total / amountOfData;
         }
 
-        public void addToListAVG_RPM(int data)
+        public void addAVG_RPM_Data(int data)
         {
             this.averageRPM.Add(data);
         }
 
-        public void addToListCUR_RPM(int data)
+        public void addCUR_RPM_Data(int data)
         {
             this.currentRPM.Add(data);
         }
 
-        public void addToListAVG_Speed(int data)
+        public void addAVG_Speed_Data(int data)
         {
             this.averageSpeed.Add(data);
         }
 
-        public void addToListCUR_Speed(int data)
+        public void addCUR_Speed_Data(int data)
         {
             this.currentSpeed.Add(data);
         }
 
-        public void addToListTorque(int data)
+        public void addTorque_Data(int data)
         {
             this.torque.Add(data);
         }
 
-        public void addToListDistanceTraversed(int data)
+        public void addDistanceTraversed_Data(int data)
         {
             this.distanceTraversed.Add(data);
         }

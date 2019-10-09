@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace RHCFileIO
 {
+    /// <Class HeartData>
+    /// 
+    /// This class contains data of the bike
+    /// to add to a certain list call upon the corresponding method.
+    /// 
+    /// </summary>
+
     public class HeartData
     {
         public List<int> currentHRTRate { get; set; }
@@ -18,12 +25,12 @@ namespace RHCFileIO
             this.currentHRTRate = new List<int>();
         }
 
-        public void addToListAVG(int data)
+        public void addAVGRate_Data(int data)
         {
             this.averageHRTRate.Add(data);
         }
 
-        public void addToListCUR(int data)
+        public void addCURRate_Data(int data)
         {
             this.currentHRTRate.Add(data);
         }
