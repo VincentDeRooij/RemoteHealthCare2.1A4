@@ -81,6 +81,9 @@
     <Reference Include="Microsoft.Xaml.Behaviors, Version=1.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf.1.0.1\lib\net45\Microsoft.Xaml.Behaviors.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
@@ -103,6 +106,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="InlogWindow.xaml.cs">
+      <DependentUpon>InlogWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Simulator\Simulator.cs" />
     <Compile Include="UserControls\DeviceConnection.xaml.cs">
       <DependentUpon>DeviceConnection.xaml</DependentUpon>
@@ -113,6 +119,10 @@
     <Compile Include="UserControls\StationaryBikeControl.xaml.cs">
       <DependentUpon>StationaryBikeControl.xaml</DependentUpon>
     </Compile>
+    <Page Include="InlogWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
