@@ -21,8 +21,8 @@
         <TextBlock Text="Password" Margin="0,10,0,10" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="1" Foreground="White"/>
 
         <TextBox Margin="0,10,0,10" x:Name="bsnInput" Grid.Column="1" Grid.Row="0" FontSize="24"/>
-        <TextBox Margin="0,10,0,10" x:Name="passwordInput" Grid.Column="1" Grid.Row="1" FontSize="24"/>
+        <PasswordBox Margin="0,10,0,10" x:Name="passwordInput" Grid.Column="1" Grid.Row="1" FontSize="24"/>
 
-        <Button Margin="0,20,0,0" Content="Log in" x:Name="btnLogin" Height="50" Grid.Column="1" Grid.Row="2" Width="100" Background="white"/>
+        <Button HorizontalAlignment="Center" VerticalAlignment="Center" Content="Log in" x:Name="btnLogin" Height="50" Grid.Column="1" Grid.Row="2" Width="100" Background="white" Click="LogInClick"/>
     </Grid>
 </Window>

@@ -23,5 +23,13 @@ namespace RemoteHealthCare
         {
             InitializeComponent();
         }
+
+        private void LogInClick(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("BSN: " + bsnInput.Text + "\nPassWord: " + passwordInput.Password);
+            MainWindow main = new MainWindow();
+            main.Show();
+            this.Close();
+        }
     }
 }

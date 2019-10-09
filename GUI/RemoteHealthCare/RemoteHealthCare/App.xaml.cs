@@ -55,7 +55,9 @@ namespace RemoteHealthCare
                 }
                 Thread.Sleep(100);
             }
+            sendAction(encapsulatePacket(EngineInteraction.getScene()));
 
+            //new Thread(() => {
             Console.WriteLine("Enter a character to send a command");
             while (true)
             {
@@ -65,6 +67,8 @@ namespace RemoteHealthCare
                 Console.WriteLine("");
                 chooseAction(input);
             }
+            //}).Start();
+            Console.WriteLine("adsf");
         }
         static void ListenThread()
         {
@@ -156,7 +160,7 @@ namespace RemoteHealthCare
         private static void chooseAction(char character)
         {
             character = char.ToLower(character);
-
+            Panel panel;
             string json = "temp";
             bool sendMessage = true;
             string routeName, objectName, routeUUID, objectUUID;
@@ -198,7 +202,6 @@ namespace RemoteHealthCare
                         string name = Console.ReadLine();
                         Uuids.TryGetValue("Camera", out string cameraUUID);
                         json = encapsulatePacket(EngineInteraction.createPanel("panel", cameraUUID));
-                        Console.WriteLine(json);
                         break;
                     }
                 case 'g':
@@ -291,16 +294,12 @@ namespace RemoteHealthCare
                         json = encapsulatePacket(EngineInteraction.swapPanel(panelUUID));
                         break;
                     }
-                case 'r':
+                case 't':
                     {
                         Uuids.TryGetValue("panel", out string panelUUID);
-                        json = encapsulatePacket(EngineInteraction.drawLinesPanel(panelUUID));
-                        break;
-                    }
-                case 's':
-                    {
-                        Uuids.TryGetValue("panel", out string panelUUID);
-                        json = encapsulatePacket(EngineInteraction.drawTextPanel(panelUUID));
+                        panel = new Panel(panelUUID);
+                        panel.drawPanel();
+                        sendMessage = false;
                         break;
                     }
                 default:
@@ -310,7 +309,7 @@ namespace RemoteHealthCare
                         break;
                     }
             }
-
+            Console.WriteLine(json);
             if (sendMessage)
             {
                 sendAction(json);
@@ -340,8 +339,9 @@ namespace RemoteHealthCare
             Console.WriteLine("======================================");
         }
 
-        private static void sendAction(string json)
+        public static void sendAction(string json)
         {
+            Console.WriteLine(json);
             byte[] prependBytes = BitConverter.GetBytes(json.Length);
             byte[] databytes = System.Text.Encoding.UTF8.GetBytes(json);
 
@@ -593,16 +593,16 @@ namespace RemoteHealthCare
                     {
                         transform = new
                         {
-                            position = new[] { 2, 1, 2 },
-                            rotation = new[] { 0, 0, 0 },
+                            position = new[] { 0, 1.05, -0.65 },
+                            rotation = new[] { 285, 0, 0 },
                             scale = 1
                         },
                         panel = new
 
                         {
-                            size = new[] { 1, 1 },
+                            size = new[] { 0.5, 0.5 },
                             resolution = new[] { 512, 512 },
-                            background = new[] { 0,0,0, 1 },
+                            background = new[] { 0, 0, 0, 1 },
                             castShadow = true
                         }
 
@@ -645,7 +645,7 @@ namespace RemoteHealthCare
                 {
                     id = nodeID,
                     width = 10,
-                    lines = new []
+                    lines = new[]
                     {
                         new [] { 0,0, 512,512, 1,1,1,1 },
                         new [] { 0, 512, 512, 0, 1,1,1,1 },
@@ -685,7 +685,7 @@ namespace RemoteHealthCare
                     text = "Pascal is gay",
                     position = new[] { 100, 180 },
                     size = 70,
-                    color = new[] {0.8f,0.2f,0.8f,1 }
+                    color = new[] { 0.8f, 0.2f, 0.8f, 1 }
                 }
             };
         }
@@ -974,7 +974,7 @@ namespace RemoteHealthCare
                         transform = new
                         {
                             position = new[] { x, y, z },
-                            rotation = new[] { 0, 0, 0 },
+                            rotation = new[] { (float)(Math.PI / 180 * 45), (float)(Math.PI / 180 * 45), (float)(Math.PI / 180 * 45) },
                             scale = scale
                         },
                         model = new
@@ -1006,4 +1006,178 @@ namespace RemoteHealthCare
     }
 
     #endregion
+
+    public class Panel {
+        public string nodeID { get; set; }
+        public Panel(string nodeID) {
+            this.nodeID = nodeID;
+
+            App.sendAction(App.encapsulatePacket(EngineInteraction.clearPanel(nodeID)));
+            App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
+            App.sendAction(App.encapsulatePacket(EngineInteraction.clearPanel(nodeID)));
+            App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
+        }
+
+        public void drawPanel() {
+
+            App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
+            //Background
+
+            //Outlines
+            App.sendAction(App.encapsulatePacket(drawOutLines()));
+
+            //Text
+            App.sendAction(App.encapsulatePacket(drawText("Speed",2)));
+
+            App.sendAction(App.encapsulatePacket(drawText("Resistance", 6)));
+
+            App.sendAction(App.encapsulatePacket(drawText("Chat", 11)));
+
+            drawResistance(7);
+
+            App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
+
+        }
+
+        public object drawText(string text,int cell)
+        {
+            int s = 32;
+            return new
+            {
+                id = "scene/panel/drawtext",
+                data = new
+                {
+                    id = nodeID,
+                    text = text,
+                    position = new[] { s*1.15, s*(cell - 0.25) },
+                    size = 40,
+                    color = new[] { 1, 1, 1, 1 }
+                }
+            };
+        }
+
+        public object drawOutLines() {
+            int s = 32;
+            int sH = 16;
+            return new
+            {
+                id = "scene/panel/drawlines",
+                data = new
+                {
+                    id = nodeID,
+                    width = 2,
+                    lines = new[]
+                    {
+                        //Outer box
+                        new [] { 0,0, 0,512, 1,1,1,1 },
+                        new [] { 0,512, 512,512, 1,1,1,1 },
+                        new [] { 0, 0, 512, 0, 1,1,1,1 },
+                        new [] { 512, 0, 512, 512, 1,1,1,1 },
+
+                        //Speed Box
+                        new [] { s, s, s* 15, s, 1,1,1,1 },
+                        new [] { s*15, s, s*15, s* 4 , 1,1,1,1 },
+                        new [] { s, s*4, s*15, s* 4 , 1,1,1,1 },
+                        new [] { s, s*4, s, s, 1,1,1,1 },
+
+                        //Speed Text Box
+                        new [] { s*4, s, s*4, s*2, 1,1,1,1 },
+                        new [] { s, s*2, s*4, s*2, 1,1,1,1 },
+
+                        //Resistance Box
+                        new [] { s, s*5,s*15, s*5, 1,1,1,1 },
+                        new [] { s*15, s*9,s*15, s*5, 1,1,1,1 },
+                        new [] { s*15, s*9,s, s*9, 1,1,1,1 },
+                        new [] { s, s*5,s, s*9, 1,1,1,1 },
+
+                        //Resistance Text Box
+                        new [] { s*6, s*5,s*6, s*6, 1,1,1,1 },
+                        new [] { s, s*6,s*6, s*6, 1,1,1,1 },
+
+                        //Resistance Value Box
+                        new [] { s*1 + sH, s* 6 + sH, s* 14 + sH, s* 6 + sH, 1,1,1,1 },
+                        new [] { s*14 + sH, s* 8 + sH, s* 14 + sH, s* 6 + sH, 1,1,1,1 },
+                        new [] { s*14 + sH, s* 8 + sH, s* 1 + sH, s* 8 + sH, 1,1,1,1 },
+                        new [] { s*1 + sH, s* 6 + sH, s* 1 + sH, s* 8 + sH, 1,1,1,1 },
+
+                        //Chat Box
+                        new [] { s,s*10,s*15,s*10, 1,1,1,1 },
+                        new [] { s*15,s*15,s*15,s*10, 1,1,1,1 },
+                        new [] { s*15,s*15,s,s*15, 1,1,1,1 },
+                        new [] { s,s*10,s,s*15, 1,1,1,1 },
+
+                        //Chat Text Box
+                        new [] { s*3 + s/2, s*11, s*3 + s/2, s*10, 1,1,1,1 },
+                        new [] { s*3 + s/2, s*11, s, s*11, 1,1,1,1 },
+
+
+
+
+                        /*
+                        TODO:
+                        [ 0,0, 10,10, 0,0,0,1, // x1,y1, x2,y2, r,g,b,a ],
+                        [0, 0, 100, 10, 0, 0, 0, 1, // x1,y1, x2,y2, r,g,b,a ]
+                        */
+                    }
+                }
+            };
+        }
+
+        public void drawResistance(int value) {
+            for (int i = 0; i < value; i++) {
+                App.sendAction(App.encapsulatePacket(drawResistanceBlock(i)));
+            }
+        }
+
+        public object drawResistanceBlock(int value)
+        {
+            int s = 32;
+            float x = 13 * 32 / 7;
+
+            return new
+            {
+                id = "scene/panel/drawlines",
+                data = new
+                {
+                    id = nodeID,
+                    width = 8,
+                    lines = new[]
+                    {
+                        new [] {
+                            1.5 * s + value*x,
+                            6.625 * s,
+                            1.5 * s + (value + 1) * x,
+                            6.625 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+                        new [] {
+                            1.5 * s + value*x,
+                            7.125 * s,
+                            1.5 * s + (value + 1) * x,
+                            7.125 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+                        new [] {
+                            1.5 * s + value*x,
+                            7.625 * s,
+                            1.5 * s + (value + 1) * x,
+                            7.625 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+                        new [] {
+                            1.5 * s + value*x,
+                            8.125 * s,
+                            1.5 * s + (value + 1) * x,
+                            8.125 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+
+                        /*
+                        [0, 0, 100, 10, 0, 0, 0, 1, // x1,y1, x2,y2, r,g,b,a ]
+                        */
+                    }
+                }
+            };
+        }
+    }
 }
