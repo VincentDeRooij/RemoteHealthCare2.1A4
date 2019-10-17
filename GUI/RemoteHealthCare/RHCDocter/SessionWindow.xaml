@@ -9,7 +9,7 @@
         SizeToContent="WidthAndHeight">
 
     <Grid>
-        <Frame Name="SessionMainFrame" Source="Pages/SessionPage.xaml"/>
+        <Frame Name="SessionMainFrame" />
     </Grid>
 
 </Window>
