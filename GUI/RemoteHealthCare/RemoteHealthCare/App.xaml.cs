@@ -9,6 +9,8 @@ using System.Windows;
 using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RHCCore.Networking;
+using System.Net;
 
 namespace RemoteHealthCare
 {
@@ -24,52 +26,61 @@ namespace RemoteHealthCare
         public static string tunnelId;
         public static String sceneJson;
         public static Dictionary<String, String> Uuids = new Dictionary<string, string>();
+
+        public static TcpClientWrapper serverClientWrapper;
+
         public App()
             : base()
         {
 #if SIM
             Simulator.Simulator s = Simulator.Simulator.Instance;
 #endif
-            client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
-            stream = client.GetStream();
+            serverClientWrapper = new TcpClientWrapper();
+            serverClientWrapper.Connect(new System.Net.IPEndPoint(IPAddress.Parse("127.0.0.1"), 20000));
 
-            Thread listenThread = new Thread(ListenThread);
-            listenThread.Start();
-
-            sendAction(getSessions());
-            while (true)
+            Thread vrThread = new Thread(() =>
             {
-                if (sessionId != null)
+                client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
+                stream = client.GetStream();
+
+                Thread listenThread = new Thread(ListenThread);
+                listenThread.Start();
+
+                sendAction(getSessions());
+                while (true)
                 {
-                    break;
+                    if (sessionId != null)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(100);
                 }
-                Thread.Sleep(100);
-            }
 
-            sendAction(tunnelCreate());
-            while (true)
-            {
-                if (tunnelId != null)
+                sendAction(tunnelCreate());
+                while (true)
                 {
-                    break;
+                    if (tunnelId != null)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(100);
                 }
-                Thread.Sleep(100);
-            }
-            sendAction(encapsulatePacket(EngineInteraction.getScene()));
+                sendAction(encapsulatePacket(EngineInteraction.getScene()));
 
-            //new Thread(() => {
-            Console.WriteLine("Enter a character to send a command");
-            while (true)
-            {
-                printMenu();
-                //char henk = Console.ReadLine().ToString().ToCharArray()[0];
-                char input = Console.ReadKey().KeyChar;
-                Console.WriteLine("");
-                chooseAction(input);
-            }
-            //}).Start();
-            Console.WriteLine("adsf");
+                //new Thread(() => {
+                Console.WriteLine("Enter a character to send a command");
+                while (true)
+                {
+                    printMenu();
+                    //char henk = Console.ReadLine().ToString().ToCharArray()[0];
+                    char input = Console.ReadKey().KeyChar;
+                    Console.WriteLine("");
+                    chooseAction(input);
+                }
+                //}).Start();
+            });
         }
+
         static void ListenThread()
         {
             while (true)

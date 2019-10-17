@@ -22,14 +22,35 @@ namespace RemoteHealthCare
         public InlogWindow()
         {
             InitializeComponent();
+            App.serverClientWrapper.OnReceived += OnMessageReceived;
+        }
+
+        private void OnMessageReceived(RHCCore.Networking.IConnection connection, dynamic args)
+        {
+            if (args.Command == "login/authenticated")
+            {
+                MainWindow main = new MainWindow();
+                main.Show();
+                this.Close();
+            }
+
+            if (args.Command == "login/refused")
+            {
+                MessageBox.Show("Incorrect username or password", "Refused", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void LogInClick(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("BSN: " + bsnInput.Text + "\nPassWord: " + passwordInput.Password);
-            MainWindow main = new MainWindow();
-            main.Show();
-            this.Close();
+            App.serverClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "login/try",
+                Data = new
+                {
+                    Username = bsnInput.Text,
+                    Password = passwordInput.Password
+                }
+            });
         }
     }
 }

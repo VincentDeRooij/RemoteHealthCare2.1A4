@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -56,7 +57,7 @@ namespace RHCCore.Networking
 
         public void Write(dynamic data)
         {
-            this.Write(data);
+            this.Write(JsonConvert.SerializeObject(data));
         }
 
         public void Write(byte[] data)
@@ -81,17 +82,20 @@ namespace RHCCore.Networking
                 while (active)
                 {
                     byte[] lengthBuffer = new byte[4];
-                    networkStream.Read(lengthBuffer, 0, lengthBuffer.Length);
-                    int receivingByteSize = BitConverter.ToInt32(lengthBuffer, 0);
+                    int read = networkStream.Read(lengthBuffer, 0, lengthBuffer.Length);
+                    int packetLength = BitConverter.ToInt32(lengthBuffer, 0);
 
-                    if (receivingByteSize <= 0)
+                    if (packetLength <= 0 || read <= 0)
                         break;
 
-                    byte[] networkMessage = new byte[receivingByteSize];
-                    networkStream.Read(networkMessage, 0, networkMessage.Length);
+                    byte[] networkMessage = new byte[packetLength];
+                    read = networkStream.Read(networkMessage, 0, networkMessage.Length);
+
+                    if (read <= 0)
+                        break;
 
                     lastMessage = networkMessage;
-                    OnReceived?.Invoke(this, networkMessage);
+                    OnReceived?.Invoke(this, JsonConvert.DeserializeObject<dynamic>(Encoding.ASCII.GetString(networkMessage)));
                 }
             }
             catch (Exception e)

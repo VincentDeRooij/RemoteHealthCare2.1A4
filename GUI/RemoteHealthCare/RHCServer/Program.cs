@@ -39,7 +39,7 @@ namespace RHCServer
 
         private static void OnDataReceived(IConnection client, dynamic args)
         {
-            Console.WriteLine($"CLIENT {client.RemoteEndPoint.Address} SENT {Encoding.UTF8.GetString(args)}");
+            Console.WriteLine($"CLIENT {client.RemoteEndPoint.Address} SENT {args}");
         }
 
         private static void OnNewClient(IConnection client, dynamic args)
