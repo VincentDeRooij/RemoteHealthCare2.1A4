@@ -9,7 +9,7 @@
       WindowTitle="Docter Login"
       Title="Docter Login">
 
-    <Grid VerticalAlignment="Top" HorizontalAlignment="Center" ShowGridLines="true" Height="350" Width="500" Margin="0" Background="White">
+    <Grid VerticalAlignment="Top" HorizontalAlignment="Center" ShowGridLines="false" Height="350" Width="500" Margin="0" Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

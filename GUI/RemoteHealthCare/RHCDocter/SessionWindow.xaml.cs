@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using RHCDocter.Pages;
 
 namespace RHCDocter
 {
@@ -20,10 +21,16 @@ namespace RHCDocter
     /// </summary>
     public partial class SessionWindow : Window
     {
-        public SessionWindow(String clientUserName)
+        //public int STIS { get; } //Session Time In Seconds 
+
+        public SessionWindow(ref MainWindow.Person person, ref MainWindow.Session session)
         {
             InitializeComponent();
-            Title = $"Session '{clientUserName}' at {DateTime.Today}";
+            Title = $"Session '{person.name} : {person.BSN}' at {session.sessionDate} Session";
+
+            SessionPage sessionPage = new SessionPage(ref person, ref session);
+            SessionMainFrame.Navigate(sessionPage);
+
             SessionMainFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
 
             SessionMainFrame.CommandBindings.Add(new CommandBinding(NavigationCommands.BrowseForward, OnBrowseForward));

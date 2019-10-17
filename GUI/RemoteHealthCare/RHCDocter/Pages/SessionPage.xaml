@@ -5,10 +5,40 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:RHCDocter.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="350" d:DesignWidth="500"
+      d:DesignHeight="600" d:DesignWidth="900"
       >
+    <!--ShowGridLines has to be put on false-->
+    <Grid Height="600" Width="900" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="true" Margin="0" Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-    <Grid Height="350" Width="500" Background="White">
-        
+        <Border Grid.Column="0" Grid.Row="0" Height="35" Width="900">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                <Label HorizontalAlignment="Left" HorizontalContentAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center" Height="35" Width="150" Padding="10, 5">Progress:</Label>
+                <ProgressBar Name="ProgressBar" Height="35" Width="750" Minimum="0" Maximum="100"/>
+            </StackPanel>
+        </Border>
+        <Border Grid.Column="0" Grid.Row="1" Height="70" Width="900">
+            <StackPanel Orientation="Horizontal" Width="900">
+                <StackPanel Orientation="Vertical" Width="150">
+                    <Button Name="BTNStart" Click="Button_Click_Start" Content="Start" Height="35" Width="150" Padding="5"/>
+                    <Button Name="BTNStop" Click="Button_Click_Stop" Content="Stop" Height="35" Width="150" Padding="5"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Width="750">
+                    <Label VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="40" Width="150">Resistance</Label>
+                    <Slider Name="SliderResistance" HorizontalAlignment="Stretch" Height="20" Width="750"
+                            Margin="10, 5"
+                            VerticalAlignment="Top"
+                            ValueChanged="Slider_ValueChanged">
+                    </Slider>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+
+
     </Grid>
 </Page>
