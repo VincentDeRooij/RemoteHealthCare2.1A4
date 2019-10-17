@@ -81,6 +81,7 @@
   <ItemGroup>
     <Compile Include="Devices\IDevice.cs" />
     <Compile Include="NetworkConectionHandler.cs" />
+    <Compile Include="Packethandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StationaryBike.cs" />

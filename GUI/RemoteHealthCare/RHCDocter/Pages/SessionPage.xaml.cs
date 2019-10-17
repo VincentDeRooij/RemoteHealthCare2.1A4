@@ -24,7 +24,7 @@ namespace RHCDocter.Pages
         private Thread threadPB;
         private MainWindow.Person person;
         private MainWindow.Session session;
-        
+
         public SessionPage(ref MainWindow.Person person_, ref MainWindow.Session session_)
         {
             InitializeComponent();
@@ -38,6 +38,7 @@ namespace RHCDocter.Pages
         private void Button_Click_Start(object sender, RoutedEventArgs e)
         {
             threadPB.Start();
+            BTNStart.IsEnabled = false;
         }
 
         private void Button_Click_Stop(object sender, RoutedEventArgs e)
@@ -52,8 +53,15 @@ namespace RHCDocter.Pages
             var slider = sender as Slider;
 
             double value = slider.Value;
+            Console.Out.WriteLine($"Slider Value: {value}");
             //Set Window Title.
             //this.Title = "Value: " + value.ToString("0.0") + "/" + slider.Maximum;
+        }
+
+        //Double values 0.0-10 
+        private void setSlider_Value(double value)
+        {
+            SliderResistance.Value = value;
         }
 
 
@@ -67,6 +75,8 @@ namespace RHCDocter.Pages
                 //Dispatcher.Invoke(new Action(() => { ProgressBar.Value++; }));
                 Thread.Sleep(1000);
             }
+
+            Dispatcher.Invoke(() => { BTNStop.IsEnabled = false; });
             //TODO: When Session is done: 
             //
         }

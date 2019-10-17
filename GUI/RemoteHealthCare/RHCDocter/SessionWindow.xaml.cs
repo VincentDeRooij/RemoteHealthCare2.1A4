@@ -21,14 +21,16 @@ namespace RHCDocter
     /// </summary>
     public partial class SessionWindow : Window
     {
-        //public int STIS { get; } //Session Time In Seconds 
+        public bool IsClosed { get; private set; }
+        public MainWindow.Person person { get; set; }
 
-        public SessionWindow(ref MainWindow.Person person, ref MainWindow.Session session)
+        public SessionWindow(ref MainWindow.Person person_, ref MainWindow.Session session_)
         {
             InitializeComponent();
-            Title = $"Session '{person.name} : {person.BSN}' at {session.sessionDate} Session";
+            person = person_;
+            Title = $"Session '{person_.name} : {person_.BSN}' at {session_.sessionDate} Session";
 
-            SessionPage sessionPage = new SessionPage(ref person, ref session);
+            SessionPage sessionPage = new SessionPage(ref person_, ref session_);
             SessionMainFrame.Navigate(sessionPage);
 
             SessionMainFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
@@ -47,6 +49,14 @@ namespace RHCDocter
                 Console.WriteLine($"Back Mainframe");
                 //Do Nothing 
             }
+
+
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            IsClosed = true;
         }
     }
 }
