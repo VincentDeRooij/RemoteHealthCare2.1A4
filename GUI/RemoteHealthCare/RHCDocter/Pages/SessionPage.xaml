@@ -8,7 +8,7 @@
       d:DesignHeight="600" d:DesignWidth="900"
       >
     <!--ShowGridLines has to be put on false-->
-    <Grid Height="600" Width="900" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="true" Margin="0" Background="White">
+    <Grid Height="600" Width="900" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="false" Margin="0" Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -37,8 +37,19 @@
                 </StackPanel>
             </StackPanel>
         </Border>
-
-
-
+        <Border Grid.Column="0" Grid.Row="2" Height="795" Width="900" Background="LightGray">
+            <StackPanel Orientation="Vertical" Height="795" Width="900">
+                <Label Height="35" Width="150" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">Graphs</Label>
+                <TabControl Height="760" Width="900">
+                    <TabItem Header="Graph 1" Height="35" Width="150">
+                        <!--<Label Content="Shit here" />-->
+                    </TabItem>
+                    <TabItem Header="Graphs 2" Height="35" Width="150">
+                    </TabItem>
+                    <TabItem Header="Graphs 3" Height="35" Width="150">
+                    </TabItem>
+                </TabControl>
+            </StackPanel>
+        </Border>
     </Grid>
 </Page>

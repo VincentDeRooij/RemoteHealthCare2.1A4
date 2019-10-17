@@ -76,7 +76,7 @@ namespace RHCDocter.Pages
                 Thread.Sleep(1000);
             }
 
-            BTNStop.IsEnabled = false;
+            Dispatcher.Invoke(() => { BTNStop.IsEnabled = false; });
             //TODO: When Session is done: 
             //
         }
