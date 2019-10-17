@@ -49,7 +49,8 @@ namespace RHCServer
 
         public static dynamic GetUser(string username)
         {
-            
+            UserList list = JsonConvert.DeserializeObject<UserList>(File.ReadAllText(USER_FILE));
+            return list.users.Where(x => x.Username == username).FirstOrDefault();
         }
     }
 }
