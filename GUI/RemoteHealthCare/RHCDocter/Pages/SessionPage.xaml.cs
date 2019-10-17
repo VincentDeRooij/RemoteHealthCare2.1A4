@@ -38,6 +38,7 @@ namespace RHCDocter.Pages
         private void Button_Click_Start(object sender, RoutedEventArgs e)
         {
             threadPB.Start();
+            BTNStart.IsEnabled = false;
         }
 
         private void Button_Click_Stop(object sender, RoutedEventArgs e)

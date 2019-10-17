@@ -73,7 +73,7 @@
                         <Label Grid.Column="0" Grid.Row="0" Width="150">Name Session:</Label>
                         <TextBox Grid.Column="0" Grid.Row="1" Name="TXTBoxNameSession" Width="150"></TextBox>
 
-                        <Label Grid.Column="0" Grid.Row="2" Width="150">Time Session in minutes:</Label>
+                        <Label Grid.Column="0" Grid.Row="2" Width="150">Time Session in seconden:</Label>
                         <TextBox Grid.Column="0" Grid.Row="3" Name="TXTBoxTimeSession" Width="150" TextChanged="TXTBoxTimeSession_OnTextChanged"></TextBox>
                     </Grid>
                     <Button Name="BTNCreate" Click="Button_Click_Create" Height="30" Width="300" Margin="0">Create</Button>
