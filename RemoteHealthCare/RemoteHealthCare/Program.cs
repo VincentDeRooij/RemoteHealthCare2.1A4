@@ -132,24 +132,13 @@ namespace RemoteHealthCare
                     int errorCode = await heartSensor.OpenDevice("Decathlon Dual HR");
                     StationaryHeart heart = new StationaryHeart(heartSensor, errorCode);
                     await heart.Device.SetService("HeartRate");
-                    heart.Device.SubscriptionValueChanged += Heart_SubscriptionValueChanged;
+                    heart.Device.SubscriptionValueChanged += heart.Heart_SubscriptionValueChanged;
                     await heart.Device.SubscribeToCharacteristic("HeartRateMeasurement");
                 break;
             }
         }
 
-        private static void Heart_SubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
-        {
-            Console.WriteLine("Received from {0}: {1}", e.ServiceName,
-            BitConverter.ToString(e.Data).Replace("-", " "));
-            byte[] data = e.Data;
-            string[] pageData = BitConverter.ToString(e.Data).Split('-'); // split the string into individual pieces
-            
-            if (pageData[0] == "16")
-            {
-                Console.WriteLine(data[1].ToString()); // write the HeartRate data to the console
-            }
-        }
+        
 
         private static void OnSubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
         {
