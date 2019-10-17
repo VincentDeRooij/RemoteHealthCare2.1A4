@@ -73,6 +73,33 @@ namespace RemoteHealthCare
             
         }
 
+        static private byte CalCheckSum(byte[] data)
+        {
+            int packetLength = data.Length;
+
+            Byte checkSumByte = 0x00;
+            for (int i = 0; i < packetLength; i++)
+                checkSumByte ^= data[i];
+            return checkSumByte;
+        }
+
+        private static void changeBikeResistance(BLE bike, byte resistance)
+        {
+            string characteristic = "6e40fec3-b5a3-f393-e0a9-e50e24dcca9e";
+
+            byte[] data = new byte[13];
+
+            data[0] = 0x4A; // Sync bit;
+            data[1] = 0x09; // Message Length
+            data[2] = 0x4E; // Message type
+            data[3] = 0x05; // Message type
+            data[4] = 0x30; // Data Type
+            data[11] = resistance; // resistance in 
+            data[12] = CalCheckSum(data);
+
+            bike.WriteCharacteristic(characteristic, data);
+        }
+
         private static async Task AddDeviceAsync(string deviceName, string serviceName, string characteristic, EDeviceType deviceType)
         {
             BLE deviceService = new BLE();
@@ -88,8 +115,7 @@ namespace RemoteHealthCare
                 Console.WriteLine(item.Name);
             }
             await deviceService.SetService(serviceName);
-            
-            
+                        
             deviceService.SubscriptionValueChanged += OnSubscriptionValueChanged;
             await deviceService.SubscribeToCharacteristic(characteristic);
 
@@ -102,8 +128,26 @@ namespace RemoteHealthCare
                 break;
 
                 case EDeviceType.HeartRateMonitor:
-                    
+                    BLE heartSensor = new BLE();
+                    int errorCode = await heartSensor.OpenDevice("Decathlon Dual HR");
+                    StationaryHeart heart = new StationaryHeart(heartSensor, errorCode);
+                    await heart.Device.SetService("HeartRate");
+                    heart.Device.SubscriptionValueChanged += Heart_SubscriptionValueChanged;
+                    await heart.Device.SubscribeToCharacteristic("HeartRateMeasurement");
                 break;
+            }
+        }
+
+        private static void Heart_SubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
+        {
+            Console.WriteLine("Received from {0}: {1}", e.ServiceName,
+            BitConverter.ToString(e.Data).Replace("-", " "));
+            byte[] data = e.Data;
+            string[] pageData = BitConverter.ToString(e.Data).Split('-'); // split the string into individual pieces
+            
+            if (pageData[0] == "16")
+            {
+                Console.WriteLine(data[1].ToString()); // write the HeartRate data to the console
             }
         }
 
