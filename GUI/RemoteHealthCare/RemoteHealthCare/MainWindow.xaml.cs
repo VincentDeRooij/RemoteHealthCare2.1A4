@@ -28,11 +28,13 @@ namespace RemoteHealthCare
     public partial class MainWindow
     {
         List<IDevice> devices = new List<IDevice>();
+        string authkey;
 
-        public MainWindow()
+        public MainWindow(string authkey)
         {
             InitializeComponent();
             DataContext = this;
+            this.authkey = authkey;
         }
 
         private void OnConnectToDevice(object sender, RoutedEventArgs e)

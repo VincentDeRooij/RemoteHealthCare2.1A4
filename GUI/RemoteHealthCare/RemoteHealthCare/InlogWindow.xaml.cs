@@ -27,11 +27,15 @@ namespace RemoteHealthCare
 
         private void OnMessageReceived(RHCCore.Networking.IConnection connection, dynamic args)
         {
+            Console.WriteLine(args);
             if (args.Command == "login/authenticated")
             {
-                MainWindow main = new MainWindow();
-                main.Show();
-                this.Close();
+                Dispatcher.Invoke(() =>
+                {
+                    MainWindow main = new MainWindow((string)args.Data.Key);
+                    main.Show();
+                    this.Close(); 
+                });
             }
 
             if (args.Command == "login/refused")
@@ -47,8 +51,8 @@ namespace RemoteHealthCare
                 Command = "login/try",
                 Data = new
                 {
-                    Username = bsnInput.Text,
-                    Password = passwordInput.Password
+                    Username = RHCCore.Security.Hashing.EncryptSHA256(bsnInput.Text),
+                    Password = RHCCore.Security.Hashing.EncryptSHA256(passwordInput.Password)
                 }
             });
         }
