@@ -19,11 +19,13 @@ namespace RemoteHealthCare
         {
             if (errorCode != 0)
             {
+                Console.WriteLine("Connection couldn't be established, running sim");
                 this.simBArray = SimulateHeartRate();
                 StartSim(this.simBArray);
             }
             else
             {
+                Console.WriteLine("Connection Established, getting data");
                 this.heartRateDevice = heartDevice;
             }
         }
@@ -49,6 +51,21 @@ namespace RemoteHealthCare
                 Thread.Sleep(1000);
                 Console.WriteLine($"HeartRate {data}");
                 this.heartRate = data;
+            }
+        }
+
+        public void Heart_SubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
+        {
+            Console.WriteLine("Received from {0}: {1}", e.ServiceName, BitConverter.ToString(e.Data).Replace("-", " "));
+
+            byte[] data = e.Data;
+            string[] pageData = BitConverter.ToString(e.Data).Split('-'); // split the string into individual pieces
+
+            if (pageData[0] == "16")
+            {
+                //Console.WriteLine(data[1].ToString()); // write the HeartRate data to the console
+                this.heartRate = data[1];
+                Console.WriteLine(this.heartRate.ToString());
             }
         }
 
