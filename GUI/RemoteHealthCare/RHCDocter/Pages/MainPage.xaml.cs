@@ -53,6 +53,11 @@ namespace RHCDocter.Pages
             //AddMessageToView(true, "DokterMessage");
             //AddMessageToView(false, "ClientMSG");
 
+            if (ClientsListBox.SelectedIndex < 0)
+            {
+                BTNCreate.IsEnabled = false;
+            }
+
             if (ArchivedSessionsListBox.SelectedIndex < 0)
             {
                 BTNConfirm.IsEnabled = false;
