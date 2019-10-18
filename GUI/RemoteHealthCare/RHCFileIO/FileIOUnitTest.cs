@@ -24,7 +24,9 @@ namespace FileManager
         {
             LogWriter.TestLogWriter();
             DataWriter.TestHistoryWriter();
-            
+
+            Console.WriteLine("---Check log files inside of the bin directories");
+
             Console.ReadLine();
         }
     }
