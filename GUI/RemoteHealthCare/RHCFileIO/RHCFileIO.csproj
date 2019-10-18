@@ -52,7 +52,7 @@
     <Compile Include="HeartData.cs" />
     <Compile Include="PatientOverview.cs" />
     <Compile Include="LogWriter.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="FileIOUnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

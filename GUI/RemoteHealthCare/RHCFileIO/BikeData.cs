@@ -7,6 +7,13 @@ using System.Threading.Tasks;
 
 namespace FileManager
 {
+
+    /// <Class BikeData>
+    /// 
+    /// This class contains data of the bike
+    /// to add to a certain list call upon the corresponding method.
+    /// 
+    /// </summary>
     public class BikeData
     {
         public List<int> averageRPM { get; set; }

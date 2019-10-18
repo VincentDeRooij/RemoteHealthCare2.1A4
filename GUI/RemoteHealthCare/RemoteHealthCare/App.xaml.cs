@@ -11,6 +11,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Diagnostics;
+using RHCCore.Networking;
+using System.Net;
 
 namespace RemoteHealthCare
 {
@@ -30,17 +32,22 @@ namespace RemoteHealthCare
         public static Stopwatch stopwatch = new Stopwatch();
         public static Panel panel { get; set; }
 
+
+        public static TcpClientWrapper serverClientWrapper;
+
         public App()
             : base()
         {
 #if SIM
             Simulator.Simulator s = Simulator.Simulator.Instance;
 #endif
-            client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
-            stream = client.GetStream();
+            serverClientWrapper = new TcpClientWrapper();
+            serverClientWrapper.Connect(new System.Net.IPEndPoint(IPAddress.Parse("127.0.0.1"), 20000));
 
-            Thread listenThread = new Thread(ListenThread);
-            listenThread.Start();
+            Thread vrThread = new Thread(() =>
+            {
+                client = new System.Net.Sockets.TcpClient("145.48.6.10", 6666);
+                stream = client.GetStream();
 
             stopwatch.Start();
 
@@ -60,30 +67,32 @@ namespace RemoteHealthCare
                     process.Close();
                 }
             }).Start();
-
-
-
-
             Thread.Sleep(3000);
             sendAction(getSessions());
             while (true)
             {
                 if (sessionId != null)
-                {
-                    break;
-                }
-                Thread.Sleep(100);
-            }
 
-            sendAction(tunnelCreate());
-            while (true)
-            {
-                if (tunnelId != null)
                 {
-                    break;
+                    if (sessionId != null)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(100);
+                }
+
+                sendAction(tunnelCreate());
+                while (true)
+                {
+                    if (tunnelId != null)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(100);
                 }
                 Thread.Sleep(100);
             }
+            sendAction(encapsulatePacket(EngineInteraction.getScene()));
 
             setupSimulator();
 
@@ -101,6 +110,7 @@ namespace RemoteHealthCare
                 }
             }).Start();
         }
+
         static void ListenThread()
         {
             while (true)

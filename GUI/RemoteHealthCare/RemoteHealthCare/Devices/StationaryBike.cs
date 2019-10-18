@@ -123,5 +123,32 @@ namespace RemoteHealthCare.Devices
         {
             this.DeviceDataChanged?.Invoke(this, null);
         }
+
+        private byte CalCheckSum(byte[] data)
+        {
+            int packetLength = data.Length;
+
+            Byte checkSumByte = 0x00;
+            for (int i = 0; i < packetLength; i++)
+                checkSumByte ^= data[i];
+            return checkSumByte;
+        }
+
+        private void changeBikeResistance(byte resistance)
+        {
+            string characteristic = "6e40fec3-b5a3-f393-e0a9-e50e24dcca9e";
+            
+            byte[] data = new byte[13];
+
+            data[0] = 0x4A; // Sync bit;
+            data[1] = 0x09; // Message Length
+            data[2] = 0x4E; // Message type
+            data[3] = 0x05; // Message type
+            data[4] = 0x30; // Data Type
+            data[11] = resistance; // resistance in 
+            data[12] = CalCheckSum(data);
+
+            bluetoothLinkedDevice.WriteCharacteristic(characteristic, data);
+        }
     }
 }

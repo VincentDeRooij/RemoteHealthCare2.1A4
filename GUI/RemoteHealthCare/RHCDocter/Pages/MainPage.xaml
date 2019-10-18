@@ -11,14 +11,14 @@
     <StackPanel Orientation="Horizontal" Background="Gray">
         <Border Height="600" Width="300" Background="White" Padding="0" Margin="1, 2">
             <ListBox Name="ClientsListBox" SelectionChanged="LB_Clients_SelectChanged" HorizontalContentAlignment="Center" Background="White" BorderThickness="0" Padding="10, 5" Margin="0">
-                <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="LightGray" Padding="5">Mike</ListBoxItem>
+                <!--<ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="LightGray" Padding="5">Mike</ListBoxItem>
                 <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Miloe</ListBoxItem>
                 <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Jan</ListBoxItem>
-                <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Piet</ListBoxItem>
+                <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Piet</ListBoxItem>-->
             </ListBox>
         </Border>
-        <Border Height="600" Width="300" Background="Azure" Margin="1, 2">
-            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="true" Height="600" Width="300" Margin="0" Background="Aquamarine">
+        <Border Height="600" Width="300" Background="White" Margin="1, 2">
+            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="false" Height="600" Width="300" Margin="0" Background="White">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -35,8 +35,7 @@
 
                 <Border Grid.Column="0" Grid.Row="1" Height="535" Width="300" >
                     <ScrollViewer Height="535" Width="300" VerticalScrollBarVisibility="Auto" Padding="5">
-                        <StackPanel Name="MessagesPanel" Orientation="Vertical" >
-                        </StackPanel>
+                        <StackPanel Name="MessagesPanel" Orientation="Vertical" />
                     </ScrollViewer>
                 </Border>
 
@@ -49,8 +48,8 @@
             </Grid>
 
         </Border>
-        <Border Height="600" Width="300" Background="Chartreuse" Margin="1, 2">
-            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="true" Height="600" Width="300" Margin="0">
+        <Border Height="600" Width="300" Background="White" Margin="1, 2">
+            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="false" Height="600" Width="300" Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -63,7 +62,7 @@
                 </ComboBox>
 
                 <StackPanel Grid.Column="0" Grid.Row="1" Name="CreateSessionPanel" Visibility="Hidden" Orientation="Vertical" HorizontalAlignment="Stretch"  Height="570" Width="300">
-                    <Grid VerticalAlignment="Center" HorizontalAlignment="Left" ShowGridLines="true" Height="540" Width="300">
+                    <Grid VerticalAlignment="Center" HorizontalAlignment="Left" ShowGridLines="false" Height="540" Width="300">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -74,7 +73,7 @@
                         <Label Grid.Column="0" Grid.Row="0" Width="150">Name Session:</Label>
                         <TextBox Grid.Column="0" Grid.Row="1" Name="TXTBoxNameSession" Width="150"></TextBox>
 
-                        <Label Grid.Column="0" Grid.Row="2" Width="150">Time Session in minutes:</Label>
+                        <Label Grid.Column="0" Grid.Row="2" Width="150">Time Session in seconden:</Label>
                         <TextBox Grid.Column="0" Grid.Row="3" Name="TXTBoxTimeSession" Width="150" TextChanged="TXTBoxTimeSession_OnTextChanged"></TextBox>
                     </Grid>
                     <Button Name="BTNCreate" Click="Button_Click_Create" Height="30" Width="300" Margin="0">Create</Button>
@@ -83,10 +82,10 @@
                 <StackPanel Grid.Column="0" Grid.Row="1" Name="ArchivedSessionPanel" Visibility="Hidden" Orientation="Vertical" HorizontalAlignment="Stretch" Width="300">
                     <Border Height="540" Width="300" Background="White" Padding="0">
                         <ListBox Name="ArchivedSessionsListBox" SelectionChanged="LB_ArchivedSessions_SelectChanged" HorizontalContentAlignment="Center" Background="White" BorderThickness="0" Padding="10, 5" Margin="0">
-                            <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name1 : 09-10-2019 12:00</ListBoxItem>
+                            <!--<ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name1 : 09-10-2019 12:00</ListBoxItem>
                             <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name2 : 09-10-2019 13:00</ListBoxItem>
                             <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name3 : 09-10-2019 24:00</ListBoxItem>
-                            <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name4 : 10-10-2019 12:00</ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Name4 : 10-10-2019 12:00</ListBoxItem>-->
                         </ListBox>
                     </Border>
                     <Button Name="BTNConfirm" Click="Button_Click_Confirm" Height="30" Width="300" Margin="0">Confirm</Button>

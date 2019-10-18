@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Networking\NetworkConnection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\TcpClientWrapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\TcpServerWrapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Security\Hashing.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Networking\cert.cer">

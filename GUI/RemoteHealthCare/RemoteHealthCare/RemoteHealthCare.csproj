@@ -106,6 +106,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Devices\HeartRateMonitor.cs" />
     <Compile Include="InlogWindow.xaml.cs">
       <DependentUpon>InlogWindow.xaml</DependentUpon>
     </Compile>

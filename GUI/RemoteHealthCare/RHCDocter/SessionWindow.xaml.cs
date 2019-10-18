@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using RHCDocter.Pages;
 
 namespace RHCDocter
 {
@@ -20,10 +21,18 @@ namespace RHCDocter
     /// </summary>
     public partial class SessionWindow : Window
     {
-        public SessionWindow(String clientUserName)
+        public bool IsClosed { get; private set; }
+        public MainWindow.Person person { get; set; }
+
+        public SessionWindow(ref MainWindow.Person person_, ref MainWindow.Session session_)
         {
             InitializeComponent();
-            Title = $"Session '{clientUserName}' at {DateTime.Today}";
+            person = person_;
+            Title = $"Session '{person_.name} : {person_.BSN}' at {session_.sessionDate} Session";
+
+            SessionPage sessionPage = new SessionPage(ref person_, ref session_);
+            SessionMainFrame.Navigate(sessionPage);
+
             SessionMainFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
 
             SessionMainFrame.CommandBindings.Add(new CommandBinding(NavigationCommands.BrowseForward, OnBrowseForward));
@@ -40,6 +49,14 @@ namespace RHCDocter
                 Console.WriteLine($"Back Mainframe");
                 //Do Nothing 
             }
+
+
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            IsClosed = true;
         }
     }
 }

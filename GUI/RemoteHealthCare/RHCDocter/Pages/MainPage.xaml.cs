@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,14 +23,16 @@ namespace RHCDocter.Pages
     /// </summary>
     public partial class MainPage : Page
     {
-        private List<MainWindow.Person> Persons; //TODO: get docter his clients 
-        private List<MainWindow.Session> ArchivedSessions; //TODO: get archived sessions 
+        private List<MainWindow.Person> listPersons; //TODO: get docter his clients 
+        //private List<MainWindow.Session> listSession; //TODO: get archived sessions 
         private bool userOnline; //aka currentSelectedUserIsOnline 
+        public List<SessionWindow> activeSessionWindows { get; }
 
         public MainPage()
         {
             InitializeComponent();
             InitSettings();
+            activeSessionWindows = new List<SessionWindow>();
         }
 
         private void InitSettings()
@@ -37,9 +40,23 @@ namespace RHCDocter.Pages
             ClientsListBox.SelectionMode = SelectionMode.Single;
             ArchivedSessionsListBox.SelectionMode = SelectionMode.Single;
 
-            userOnline = false;
+
+
+            generatePersons();
+
+            foreach (MainWindow.Person person in listPersons)
+            {
+                AddPersonToView(person.BSN);
+            }
+
+            userOnline = true;
             //AddMessageToView(true, "DokterMessage");
             //AddMessageToView(false, "ClientMSG");
+
+            if (ClientsListBox.SelectedIndex < 0)
+            {
+                BTNCreate.IsEnabled = false;
+            }
 
             if (ArchivedSessionsListBox.SelectedIndex < 0)
             {
@@ -47,9 +64,39 @@ namespace RHCDocter.Pages
             }
         }
 
+        private void generatePersons()
+        {
+            //Generate static persons 
+            listPersons = new List<MainWindow.Person>()
+            {
+                new MainWindow.Person("Jaap", "BSN01234567"),
+                new MainWindow.Person("Piet", "BSN12345678"),
+                new MainWindow.Person("Peter", "BSN23456789")
+            };
+            //Add archived sessions 
+            listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName1", 27, true));
+            listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName2", 27, true));
+            listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName3", 27, true));
+            listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName4", 27, true));
+            //Add messages  
+            listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Hallo Jaap"));
+            listPersons[0].messages.Add(new MainWindow.Person.Message(false, "Hallo Pannenkoek"));
+            listPersons[0].messages.Add(new MainWindow.Person.Message(true, "HJB Mongool"));
+            listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Sterf RN"));
+            listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Ik start de sessie zo, dus ga maar op de fiets zitten"));
+            listPersons[1].messages.Add(new MainWindow.Person.Message(false, "Okay ik neem plaats"));
+            listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Top! Dan start ik hem nu!"));
+
+
+        }
+
         private void Button_Click_Send(object sender, RoutedEventArgs e)
         {
             String message = TXTBoxMessageSend.Text;
+            MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+            p.messages.Add(new MainWindow.Person.Message(true, message));
+            AddMessageToView(true, message);
+            //TODO: Message to Server 
 
         }
 
@@ -63,23 +110,75 @@ namespace RHCDocter.Pages
             {
                 MessageBox.Show("Please fill in a time.");
             }
+            else
+            {
+
+                //ClientsListBox.SelectedIndex
+                MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+                MainWindow.Session session = new MainWindow.Session(TXTBoxNameSession.Text, int.Parse(TXTBoxTimeSession.Text));
+                SessionWindow sw = new SessionWindow(ref p, ref session);
+                activeSessionWindows.Add(sw);
+                sw.Show();
+
+                TXTBoxNameSession.Text = "";
+                TXTBoxTimeSession.Text = "";
+
+                BTNCreate.IsEnabled = false;
+
+                (new Thread(() =>
+                {
+                    bool isClosed = false;
+                    Dispatcher.Invoke(() => { isClosed = sw.IsClosed; });
+                    Console.Out.WriteLine("Started Session Window Closed ThreadListener");
+
+                    while (!isClosed)
+                    {
+                        Dispatcher.Invoke(() => { isClosed = sw.IsClosed; });
+
+
+                        MainWindow.Person selectedPerson = null;
+                        Dispatcher.Invoke(() => { selectedPerson = listPersons[ClientsListBox.SelectedIndex]; });
+
+                        foreach (SessionWindow s in activeSessionWindows)
+                        {
+                            if (selectedPerson.Equals(s.person))
+                            {
+                                Dispatcher.Invoke(() => { BTNCreate.IsEnabled = false; });
+                            }
+                            else
+                            {
+                                //Dispatcher.Invoke(() => { BTNCreate.IsEnabled = true; });
+                            }
+                        }
+                    }
+                    activeSessionWindows.Remove(sw);
+                    if (activeSessionWindows.Count == 0)
+                    {
+                        Dispatcher.Invoke(() => { BTNCreate.IsEnabled = true; });
+                    }
+
+                })).Start();
+            }
         }
 
         private void Button_Click_Confirm(object sender, RoutedEventArgs e)
         {
             int index = ArchivedSessionsListBox.SelectedIndex;
+            MainWindow.Session archivedSession = listPersons[ClientsListBox.SelectedIndex].archivedSessions[index];
             Console.Out.WriteLine($"index: {index}");
 
             if (ClientsListBox.SelectedIndex < 0)
             {
                 MessageBox.Show("Select a user");
-            } else if (ArchivedSessionsListBox.SelectedIndex < 0)
+            }
+            else if (ArchivedSessionsListBox.SelectedIndex < 0)
             {
                 MessageBox.Show("Select a archived session");
             }
             else
             {
-                SessionWindow sw = new SessionWindow(ClientsListBox.SelectedItem.ToString().Remove(0, 37));
+                MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+                SessionWindow sw = new SessionWindow(ref p, ref archivedSession);
                 sw.Show();
             }
         }
@@ -102,6 +201,23 @@ namespace RHCDocter.Pages
                 ClientUserStatus.Content = "Offline";
                 BTNSend.IsEnabled = false;
                 BTNCreate.IsEnabled = false;
+            }
+
+            MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+
+            //Archived Sessions reset 
+            resetArchivedSessionsView();
+
+            foreach (MainWindow.Session archivedSession in p.archivedSessions)
+            {
+                AddArchivedSessionToView($"{archivedSession.name} - {archivedSession.sessionDate}");
+            }
+
+            //ChatMessages 
+            resetMessagesView();
+            foreach (MainWindow.Person.Message message in p.messages)
+            {
+                AddMessageToView(message.isDocter, message.message);
             }
         }
 
@@ -141,38 +257,31 @@ namespace RHCDocter.Pages
         private void TXTBoxTimeSession_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             String text = TXTBoxTimeSession.Text;
-            //Console.Out.WriteLine($"length: {text.Length}");
-            if (text.Length != 0)
+            if (text.Length >= 5)
             {
-                string[] numbers = Regex.Split(text, @"\D+");
-
-                string result = "";
-                foreach (string value in numbers)
-                {
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        //Console.Out.WriteLine($"value= {value}");
-                        result += value;
-                    }
-                }
-                Console.Out.WriteLine($"Result = {result}");
-                TXTBoxTimeSession.Text = result;
-                TXTBoxTimeSession.CaretIndex = result.Length;
+                TXTBoxTimeSession.Text = text.Substring(0, 4);
             }
-        }
+            else
+            {
+                //Console.Out.WriteLine($"length: {text.Length}");
+                if (text.Length != 0)
+                {
+                    string[] numbers = Regex.Split(text, @"\D+");
 
-        private void AddArchivedSessionToView(String sessionTitle)
-        {
-            //TODO: add GUI layout for archived session 
-            ListBoxItem lbi = new ListBoxItem();
-            lbi.HorizontalContentAlignment = HorizontalAlignment.Left;
-            lbi.Height = 30;
-            lbi.Width = 260;
-            lbi.Background = Brushes.DarkGray;
-            lbi.Padding = new Thickness(5);
-            lbi.Content = sessionTitle;
-
-            ArchivedSessionsListBox.Items.Add(lbi);
+                    string result = "";
+                    foreach (string value in numbers)
+                    {
+                        if (!string.IsNullOrEmpty(value))
+                        {
+                            //Console.Out.WriteLine($"value= {value}");
+                            result += value;
+                        }
+                    }
+                    Console.Out.WriteLine($"Result = {result}");
+                    TXTBoxTimeSession.Text = result;
+                    TXTBoxTimeSession.CaretIndex = result.Length;
+                }
+            }
         }
 
         private void AddPersonToView(String clientUserName)
@@ -189,6 +298,25 @@ namespace RHCDocter.Pages
             ClientsListBox.Items.Add(lbi);
         }
 
+        private void AddArchivedSessionToView(String sessionTitle)
+        {
+            //TODO: add GUI layout for archived session 
+            ListBoxItem lbi = new ListBoxItem();
+            lbi.HorizontalContentAlignment = HorizontalAlignment.Left;
+            lbi.Height = 30;
+            lbi.Width = 260;
+            lbi.Background = Brushes.DarkGray;
+            lbi.Padding = new Thickness(5);
+            lbi.Content = sessionTitle;
+
+            ArchivedSessionsListBox.Items.Add(lbi);
+        }
+
+        private void resetArchivedSessionsView()
+        {
+            ArchivedSessionsListBox.Items.Clear();
+        }
+
         private void AddMessageToView(bool isDokterMessage, string message)
         {
             Label lbl = new Label();
@@ -200,7 +328,7 @@ namespace RHCDocter.Pages
 
             lbl.MaxWidth = 250;
             lbl.HorizontalAlignment = HorizontalAlignment.Left;
-            
+
             lbl.BorderThickness = new Thickness(1);
             lbl.BorderBrush = Brushes.DarkGray;
             lbl.Margin = new Thickness(0, 5, 0, 5);
@@ -215,9 +343,14 @@ namespace RHCDocter.Pages
                 lbl.HorizontalAlignment = HorizontalAlignment.Left;
                 lbl.Background = Brushes.GhostWhite;
             }
-                
+
             lbl.Content = txtb;
             MessagesPanel.Children.Add(lbl);
+        }
+
+        private void resetMessagesView()
+        {
+            MessagesPanel.Children.Clear();
         }
     }
 }
