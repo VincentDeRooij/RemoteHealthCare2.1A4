@@ -14,6 +14,7 @@ namespace RemoteHealthCare
         private TcpClientWrapper clientWrapper;
         private Timer timer;
         private StationaryBike bike;
+        private HeartRateMonitor hRMonitor;
 
         public Packethandler(string ip)
         {
@@ -30,12 +31,16 @@ namespace RemoteHealthCare
             }
         }
 
-
-
         public void setBike(StationaryBike bike)
         {
             login("login", "password");
             this.bike = bike;
+        }
+
+        public void SetHRMonitor(HeartRateMonitor HeartMonitor) 
+        {
+            login("login", "password");
+            this.hRMonitor = HeartMonitor;
         }
 
         //Kan pas werken als de fiets goed werkt.
@@ -46,15 +51,22 @@ namespace RemoteHealthCare
             this.clientWrapper.NetworkConnection.Write(createBikeData());
             //}
             //else {
-            //    Console.WriteLine("Er is geen fiets.");
+            //    Console.WriteLine("Er is geen fiets aangesloten");
+            //}
+        }
+
+        private void sendHeartData(Object source, ElapsedEventArgs e)
+        {
+            //if (bike != null)
+            //{
+            this.clientWrapper.NetworkConnection.Write(createHeartRateData());
+            //}
+            //else {
+            //    Console.WriteLine("Er is geen HR monitor aangesloten.");
             //}
         }
 
         //Moet nog gedaan worden.
-        private void sendHeartRateData(Object source, ElapsedEventArgs e)
-        {
-            this.clientWrapper.NetworkConnection.Write(createHeartRateData());
-        }
 
         public object createBikeData()
         {
@@ -90,7 +102,7 @@ namespace RemoteHealthCare
         }
 
         //Moet nog data van de heartrate krijgen.
-        public static object createHeartRateData()
+        public object createHeartRateData()
         {
             try
             {
@@ -99,9 +111,7 @@ namespace RemoteHealthCare
                     Command = "user/push/heartrate",
                     Data = new
                     {
-                        since_session_start = "test",
-                        average_hr = "test",
-                        current_hr = "test"
+                        current_hr = $"{this.hRMonitor.HeartRate}"
                     }
                 });
             }
@@ -109,7 +119,7 @@ namespace RemoteHealthCare
             {
                 return JsonConvert.SerializeObject(new
                 {
-                    Command = "user/push//nodataavailable",
+                    Command = "user/push/nodataavailable",
                 });
             }
         }
@@ -120,7 +130,7 @@ namespace RemoteHealthCare
             this.timer = new System.Timers.Timer(time);
             // Hook up the Elapsed event for the timer. 
             this.timer.Elapsed += sendBikeData;
-            this.timer.Elapsed += sendHeartRateData;
+            this.timer.Elapsed += sendHeartData;
             this.timer.AutoReset = true;
             this.timer.Enabled = true;
         }
@@ -131,7 +141,8 @@ namespace RemoteHealthCare
             Console.WriteLine($"Received: {Encoding.ASCII.GetString(args)}");
         }
 
-        public void login(string username, string password) {
+        public void login(string username, string password)
+        {
             this.clientWrapper.NetworkConnection.Write(JsonConvert.SerializeObject(new
             {
                 Command = "user/push/login",

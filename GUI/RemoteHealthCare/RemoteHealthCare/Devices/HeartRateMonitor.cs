@@ -14,9 +14,11 @@ namespace RemoteHealthCare.Devices
         private int heartRate;
         private byte[] simByteArray;
         private BLE bluetoothLinkedDevice;
+
         public event EventHandler DeviceDataChanged;
         public BLE BluetoothLinkedDevice => bluetoothLinkedDevice;
         public EDeviceType DeviceType => EDeviceType.HeartRateMonitor;
+
         public string DeviceName => "Decathlon Dual HR";
         public int HeartRate { get { return this.heartRate; } set { this.heartRate = value; } }
         public BLE Device { get { return this.bluetoothLinkedDevice; } }
@@ -40,6 +42,7 @@ namespace RemoteHealthCare.Devices
             bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
             errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("HeartRateMeasurement");
         }
+
         public byte[] SimulateHeartRate()
         {
             byte[] simBytes = {
@@ -63,7 +66,6 @@ namespace RemoteHealthCare.Devices
         
         private void OnNotifyDataChanged(object sender, BLESubscriptionValueChangedEventArgs e) => ParseData(e.Data);
         public void PushDataChange(byte[] data) => ParseData(data);
-
         protected virtual void ParseData(byte[] data)
         {
             try
