@@ -80,21 +80,19 @@ namespace RHCServer
                     break;
 
                 case "user/push/heartrate":
-                    {
+                    {                   
                         dynamic data = args.data;
-
-                        data.bike_name = bike.DeviceName;
-                        data.average_speed = bike.AverageSpeed;
-                        data.current_speed = bike.CurrentSpeed;
-                        data.distance = bike.Distance;
+                        hrMonitor.HeartRate = data.current_hr;
                         break;
                     }
 
                 case "user/push/bike":
                     {
                         dynamic data = args.data;
-
-                        data.current_hr = hrMonitor.HeartRate;
+                        bike.deviceName = data.bike_name;
+                        bike.averageSpeed = data.average_speed;
+                        bike.currentSpeed = data.current_speed;
+                        bike.Distance = data.Distance;
                         break;
                     }
 
