@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,7 +39,8 @@ namespace RHCDocter.pages
                     this.NavigationService.Navigate(mainPage);
                 });
             }
-            else
+            
+            if (command == "login/refused")
             {
                 MessageBox.Show("Incorrect username or password", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -51,10 +53,7 @@ namespace RHCDocter.pages
             //usernameTXTBox.Text.Equals(null) || usernameTXTBox.Text.Equals("") || usernameTXTBox.Text.Contains(" ") || (usernameTXTBox.Text?.Equals("") ? true : false)  
             if (String.IsNullOrEmpty(usernameTXTBox.Text) || String.IsNullOrWhiteSpace(usernameTXTBox.Text) || usernameTXTBox.Text.Contains(" "))
             {
-                
                 System.Windows.MessageBox.Show("Please fill in a username without spaces.");
-
-                
             }
             else if (String.IsNullOrEmpty(passwordBox.Password) || String.IsNullOrWhiteSpace(passwordBox.Password) || passwordBox.Password.Contains(" "))
             {

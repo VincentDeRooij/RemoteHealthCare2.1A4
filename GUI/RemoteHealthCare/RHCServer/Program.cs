@@ -83,12 +83,20 @@ namespace RHCServer
 
                 case "clients/get":
                     {
+                        List<dynamic> objectList = new List<dynamic>();
+                        UserList.GetPersons().ForEach(x => objectList.Add(new
+                        {
+                            Person = x,
+                            IsOnline = validAuthKeys.Where(y => y.Item3 == x.Name).Count() > 0
+                        }));
+
                         client.Write(new
                         {
-                            Users = validAuthKeys
+                            Command = "clients/list",
+                            Data = objectList
                         });
                     }
-                    break;
+                break;
 
                 case "doctor/login":
                     {
