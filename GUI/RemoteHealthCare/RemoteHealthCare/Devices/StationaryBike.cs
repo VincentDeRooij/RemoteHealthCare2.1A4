@@ -145,7 +145,7 @@ namespace RemoteHealthCare.Devices
             data[2] = 0x4E; // Message type
             data[3] = 0x05; // Message type
             data[4] = 0x30; // Data Type
-            data[11] = resistance; // resistance in 
+            data[11] = resistance; // resistance
             data[12] = CalCheckSum(data);
 
             bluetoothLinkedDevice.WriteCharacteristic(characteristic, data);

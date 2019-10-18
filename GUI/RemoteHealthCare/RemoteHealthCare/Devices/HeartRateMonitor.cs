@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace RemoteHealthCare.Devices
 {
-    class HeartRateMonitor : IDevice
+    public class HeartRateMonitor : IDevice
     {
         private int heartRate;
         private byte[] simByteArray;
