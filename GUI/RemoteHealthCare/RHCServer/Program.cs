@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using RHCFileIO;
+using Newtonsoft.Json;
 using RemoteHealthCare.Devices;
 using RHCCore.Networking;
 using RHCFileIO;
@@ -17,6 +18,7 @@ namespace RHCServer
         private static TcpServerWrapper server;
         private static List<Tuple<IConnection, string, string>> validAuthKeys;
 
+        private static PatientOverview PatientOverview;
         private static DataWriter dataWriter;
         private static LogWriter logWriter;
 
@@ -95,6 +97,7 @@ namespace RHCServer
                         data.average_speed = bike.AverageSpeed;
                         data.current_speed = bike.CurrentSpeed;
                         data.distance = bike.Distance;
+
                         break;
                     }
 
@@ -151,6 +154,24 @@ namespace RHCServer
                 break;
             }
         }
+
+        public static void SaveDataBikeData(string patientID) 
+        {
+            foreach (PatientData patient in PatientOverview.PatientDataBase)
+            {
+                if (patient.patientID.Equals(patientID))
+                {
+                    BikeData bikeData = patient.bikeData;
+                }
+            }
+        }
+
+        public static void SaveDataHeartData(string patientID)
+        {
+
+        }
+
+
 
         private static void OnNewClient(IConnection client, dynamic args)
         {
