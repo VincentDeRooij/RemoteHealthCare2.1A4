@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text;
 using System.Timers;
+using System.Windows;
 using Newtonsoft.Json;
 using RemoteHealthCare.Devices;
 using RHCCore.Networking;
@@ -15,6 +16,8 @@ namespace RemoteHealthCare
         private Timer timer;
         private StationaryBike bike;
         private HeartRateMonitor hRMonitor;
+
+        private int authKey;
 
         public Packethandler(string ip)
         {
@@ -66,8 +69,6 @@ namespace RemoteHealthCare
             //}
         }
 
-        //Moet nog gedaan worden.
-
         public object createBikeData()
         {
             try
@@ -78,10 +79,10 @@ namespace RemoteHealthCare
                     Command = "user/push/bike",
                     Data = new
                     {
-                        distance_traversed = $"{this.bike.DeviceName}",
+                        bike_name = $"{this.bike.DeviceName}",
                         average_speed = $"{this.bike.AverageSpeed}",
                         current_speed = $"{this.bike.CurrentSpeed}",
-                        distance = $"{this.bike.Distance}",
+                        distance = $"{this.bike.Distance}"
                     }
                 });
             }
@@ -92,10 +93,9 @@ namespace RemoteHealthCare
                     Command = "user/push/bike",
                     Data = new
                     {
-                        distance_traversed = $"5",
                         average_speed = $"5",
                         current_speed = $"5",
-                        distance = $"5",
+                        distance = $"5"
                     }
                 });
             }
@@ -136,16 +136,47 @@ namespace RemoteHealthCare
         }
 
         //Dit moet gebeuren als de client iets ontangt. Maar dat doet hij niet.
-        public void received(IConnection client, dynamic args)
+        public void received(IConnection server, dynamic args)
         {
-            Console.WriteLine($"Received: {Encoding.ASCII.GetString(args)}");
+            string command = args.Command;
+            switch (command)
+            {
+                case "login/authenticated":
+                    {
+                        this.authKey = args.Command.data.key;
+                        break;
+                    }
+                case "login/refused":
+                    {
+                        MessageBox.Show("Login Error!");
+                        break;
+                    }
+                case "clients/sent": 
+                    {
+                        Console.WriteLine("?");
+                        break;
+                    }
+                default: 
+                    {
+                        Error();
+                        break;
+                    }   
+            }
+        }
+
+        public void Error() 
+        {
+            this.clientWrapper.NetworkConnection.Write(JsonConvert.SerializeObject(new
+            {
+                Command = "error",
+            }));
         }
 
         public void login(string username, string password)
         {
             this.clientWrapper.NetworkConnection.Write(JsonConvert.SerializeObject(new
             {
-                Command = "user/push/login",
+                Command = "login/try",
                 Data = new
                 {
                     username = $"{username}",

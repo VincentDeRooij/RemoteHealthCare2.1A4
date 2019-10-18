@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RemoteHealthCare.Devices;
 using RHCCore.Networking;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,9 @@ namespace RHCServer
     {
         private static TcpServerWrapper server;
         private static List<Tuple<IConnection, string, string>> validAuthKeys;
+
+        private static StationaryBike bike;
+        private static HeartRateMonitor hrMonitor;
 
         static async Task Main(string[] args)
         {
@@ -74,6 +78,25 @@ namespace RHCServer
                     }
                 break;
 
+                case "user/push/heartrate":
+                    {
+                        dynamic data = args.data;
+
+                        data.bike_name = bike.DeviceName;
+                        data.average_speed = bike.AverageSpeed;
+                        data.current_speed = bike.CurrentSpeed;
+                        data.distance = bike.Distance;
+                        break;
+                    }
+
+                case "user/push/bike":
+                    {
+                        dynamic data = args.data;
+
+                        data.current_hr = hrMonitor.HeartRate;
+                        break;
+                    }
+
                 case "client/add":
                     {
                         UserList.AddUser(args.Data.Name, args.Data.Username, args.Data.Password);
@@ -84,7 +107,11 @@ namespace RHCServer
                     {
                         client.Write(new
                         {
-                            Users = validAuthKeys
+                            Command = "clients/sent",
+                            Data = new 
+                            {
+                                Users = validAuthKeys
+                            }
                         });
                     }
                 break;
