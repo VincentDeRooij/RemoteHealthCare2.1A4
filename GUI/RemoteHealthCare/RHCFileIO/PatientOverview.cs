@@ -14,17 +14,17 @@ namespace RHCFileIO
 
     public class PatientOverview
     {
-        public List<PatientData> PatientData;
+        public List<PatientData> PatientDataBase;
         public PatientOverview()
         {
-            this.PatientData = new List<PatientData>();
+            this.PatientDataBase = new List<PatientData>();
         }
 
         public List<PatientData> HistoryData
         {
             get
             {
-                return this.PatientData;
+                return this.PatientDataBase;
             }
         }
     }

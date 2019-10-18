@@ -1,4 +1,4 @@
-﻿using FileManager;
+﻿using RHCFileIO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -118,7 +118,7 @@ namespace RHCFileIO
         {
             PatientOverview historyManager = new PatientOverview();
 
-            BikeData bikeData1 = new BikeData();
+            BikeData bikeData1 = new BikeData("00463");
             bikeData1.addAVG_RPM_Data(10);
             bikeData1.addAVG_Speed_Data(19);
             bikeData1.addCUR_RPM_Data(20);
@@ -132,7 +132,7 @@ namespace RHCFileIO
 
             PatientData dataOverviewHH = new PatientData("Harry Harolds", bikeData1, heartData1);
 
-            BikeData bikeData3 = new BikeData();
+            BikeData bikeData3 = new BikeData("004413");
             bikeData3.addAVG_RPM_Data(10);
             bikeData3.addAVG_Speed_Data(19);
             bikeData3.addCUR_RPM_Data(20);
@@ -146,7 +146,7 @@ namespace RHCFileIO
 
             PatientData dataOverviewHH2 = new PatientData("Harry Harolds", bikeData3, heartData3);
 
-            BikeData bikeData2 = new BikeData();
+            BikeData bikeData2 = new BikeData("12432");
             bikeData2.addAVG_RPM_Data(10);
             bikeData2.addAVG_Speed_Data(19);
             bikeData2.addCUR_RPM_Data(20);
@@ -160,7 +160,7 @@ namespace RHCFileIO
 
             PatientData dataOverviewBH = new PatientData("Barry Harolds", bikeData2, heartData2);
 
-            BikeData bikeData4 = new BikeData();
+            BikeData bikeData4 = new BikeData("432141");
             bikeData4.addAVG_RPM_Data(10);
             bikeData4.addAVG_Speed_Data(19);
             bikeData4.addCUR_RPM_Data(20);
