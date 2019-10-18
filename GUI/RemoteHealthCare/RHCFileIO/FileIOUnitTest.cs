@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace FileManager
+namespace RHCFileIO
 {
     /// <Class TestFileIO >
     /// 
@@ -24,7 +24,9 @@ namespace FileManager
         {
             LogWriter.TestLogWriter();
             DataWriter.TestHistoryWriter();
-            
+
+            Console.WriteLine("---Check log files inside of the bin directories");
+
             Console.ReadLine();
         }
     }

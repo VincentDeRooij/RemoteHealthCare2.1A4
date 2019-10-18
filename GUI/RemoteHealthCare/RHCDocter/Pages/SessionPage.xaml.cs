@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RHCCore.Networking.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using LiveCharts;
+using LiveCharts.Configurations;
 
 namespace RHCDocter.Pages
 {
@@ -22,16 +25,16 @@ namespace RHCDocter.Pages
     public partial class SessionPage : Page
     {
         private Thread threadPB;
-        private MainWindow.Person person;
-        private MainWindow.Session session;
+        private Person person;
+        private Session session;
 
-        public SessionPage(ref MainWindow.Person person_, ref MainWindow.Session session_)
+        public SessionPage(ref Person person_, ref Session session_)
         {
             InitializeComponent();
             person = person_;
             session = session_;
-            ProgressBar.Maximum = session.sessionDurationTime;
-            SliderResistance.IsEnabled = !session.isArchived;
+            ProgressBar.Maximum = session.SessionDuration;
+            SliderResistance.IsEnabled = !session.IsArchived;
             threadPB = new Thread(HandleProgressBarThread);
         }
 
@@ -67,15 +70,15 @@ namespace RHCDocter.Pages
 
         public void HandleProgressBarThread()
         {
-            Console.Out.WriteLine($"Time to progress: {session.sessionDurationTime}");
+            Console.Out.WriteLine($"Time to progress: {session.SessionDuration}");
 
-            for (int i = 0; i < session.sessionDurationTime; i++)
+            for (int i = 0; i < session.SessionDuration; i++)
             {
                 Dispatcher.Invoke(() => { ProgressBar.Value++; });
                 //Dispatcher.Invoke(new Action(() => { ProgressBar.Value++; }));
                 Thread.Sleep(1000);
             }
-
+            
             Dispatcher.Invoke(() => { BTNStop.IsEnabled = false; });
             //TODO: When Session is done: 
             //

@@ -9,27 +9,39 @@ using System.Threading.Tasks;
 
 namespace RemoteHealthCare.Devices
 {
-    class HeartRateMonitor : IDevice
+    public class HeartRateMonitor : IDevice
     {
         private int heartRate;
-        private byte[] simBArray;
-
+        private byte[] simByteArray;
         private BLE bluetoothLinkedDevice;
 
         public event EventHandler DeviceDataChanged;
-
         public BLE BluetoothLinkedDevice => bluetoothLinkedDevice;
         public EDeviceType DeviceType => EDeviceType.HeartRateMonitor;
 
-        public HeartRateMonitor()
-        {
-           
-        }
-
+        public string DeviceName => "Decathlon Dual HR";
         public int HeartRate { get { return this.heartRate; } set { this.heartRate = value; } }
         public BLE Device { get { return this.bluetoothLinkedDevice; } }
 
-        public string DeviceName => "Decathlon Dual HR";
+        public HeartRateMonitor()
+        {
+#if !SIM
+            Task.Run(async () =>
+            {
+                await SetupDevice(this.DeviceName);
+            }).Wait();
+#endif
+            OnDeviceDataChanged();
+        }
+
+        private async Task SetupDevice(string deviceName)
+        {
+            bluetoothLinkedDevice = new BLE();
+            int errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+            errorCode = await bluetoothLinkedDevice.SetService("HeartRate");
+            bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
+            errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("HeartRateMeasurement");
+        }
 
         public byte[] SimulateHeartRate()
         {
@@ -54,7 +66,6 @@ namespace RemoteHealthCare.Devices
         
         private void OnNotifyDataChanged(object sender, BLESubscriptionValueChangedEventArgs e) => ParseData(e.Data);
         public void PushDataChange(byte[] data) => ParseData(data);
-
         protected virtual void ParseData(byte[] data)
         {
             try

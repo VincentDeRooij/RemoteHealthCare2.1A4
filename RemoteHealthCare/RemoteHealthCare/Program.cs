@@ -1,4 +1,4 @@
-﻿#define MULTI_DEVICE
+#define MULTI_DEVICE
 
 
 using System.Data;
