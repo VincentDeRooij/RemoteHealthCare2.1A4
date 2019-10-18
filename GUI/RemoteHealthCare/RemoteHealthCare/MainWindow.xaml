@@ -33,5 +33,29 @@
                 <StackPanel Background="{DynamicResource AppPaddingColor}" x:Name="lvDevices" HorizontalAlignment="Stretch" Orientation="Vertical"/>
             </ScrollViewer>
         </Grid>
+
+        <Border Width="300" Background="White" Margin="1, 2">
+            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="false" Height="390" Width="300" Margin="0" Background="White">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+
+                <Border Grid.Column="0" Grid.Row="0" Height="350" Width="300" >
+                    <ScrollViewer Height="350" Width="300" VerticalScrollBarVisibility="Auto" Padding="5">
+                        <StackPanel Name="MessagesPanel" Orientation="Vertical" />
+                    </ScrollViewer>
+                </Border>
+
+                <Border Grid.Column="0" Grid.Row="1" Height="30" Width="300">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Width="300">
+                        <TextBox Name="TXTBoxMessageSend" VerticalAlignment="Center" HorizontalAlignment="Left" Height="30"  Width="250" Padding="5"/>
+                        <Button Name="BTNSend" Click="Button_Click_Send" Content="Send" Height="30" Width="50" Padding="5"></Button>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </Border>
     </DockPanel>
 </Controls:MetroWindow>

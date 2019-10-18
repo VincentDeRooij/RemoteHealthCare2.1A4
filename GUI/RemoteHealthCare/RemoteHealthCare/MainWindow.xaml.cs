@@ -57,5 +57,15 @@ namespace RemoteHealthCare
             };
             wndConnect.ShowDialog();
         }
+
+        private void Button_Click_Send(object sender, RoutedEventArgs e)
+        {
+            //String message = TXTBoxMessageSend.Text;
+            //MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+            //p.messages.Add(new MainWindow.Person.Message(true, message));
+            //AddMessageToView(true, message);
+            //TODO: Message to Server 
+
+        }
     }
 }
