@@ -148,6 +148,22 @@ namespace RHCServer
                         }
                     }
                 break;
+
+                case "dokter/history/request":
+                    {
+                        PatientData data = dataWriter.GetPatientData(args.Data.Patient);
+                        dynamic json = JsonConvert.SerializeObject(data);
+
+                        client.Write(new
+                        {
+                            Command = "history/patient",
+                            Data = new 
+                            { 
+                                patient = json
+                            }
+                        });
+                        break;
+                    }
             }
         }
 
