@@ -9,11 +9,13 @@ using System.Windows;
 using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Diagnostics;
 
 namespace RemoteHealthCare
 {
 
-    /// <summary>
+    /// <summary>w
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application
@@ -24,6 +26,10 @@ namespace RemoteHealthCare
         public static string tunnelId;
         public static String sceneJson;
         public static Dictionary<String, String> Uuids = new Dictionary<string, string>();
+        public static ArrayList chatList = new ArrayList();
+        public static Stopwatch stopwatch = new Stopwatch();
+        public static Panel panel { get; set; }
+
         public App()
             : base()
         {
@@ -36,6 +42,29 @@ namespace RemoteHealthCare
             Thread listenThread = new Thread(ListenThread);
             listenThread.Start();
 
+            stopwatch.Start();
+
+            string command = string.Format(@"C:\Users\brand\Downloads\NetworkEngine.18.10.10.1\NetworkEngine\");
+
+            new Thread(() =>
+            {
+                Console.WriteLine("Enter a character to send a command");
+                while (true)
+                {
+                    Process process = new Process();
+                    process.StartInfo.WorkingDirectory = command;
+                    process.StartInfo.FileName = "sim.bat";
+                    process.StartInfo.CreateNoWindow = false;
+                    process.Start();
+                    process.WaitForExit();
+                    process.Close();
+                }
+            }).Start();
+
+
+
+
+            Thread.Sleep(3000);
             sendAction(getSessions());
             while (true)
             {
@@ -55,20 +84,22 @@ namespace RemoteHealthCare
                 }
                 Thread.Sleep(100);
             }
-            sendAction(encapsulatePacket(EngineInteraction.getScene()));
 
-            //new Thread(() => {
-            Console.WriteLine("Enter a character to send a command");
-            while (true)
+            setupSimulator();
+
+
+            new Thread(() =>
             {
-                printMenu();
-                //char henk = Console.ReadLine().ToString().ToCharArray()[0];
-                char input = Console.ReadKey().KeyChar;
-                Console.WriteLine("");
-                chooseAction(input);
-            }
-            //}).Start();
-            Console.WriteLine("adsf");
+                Console.WriteLine("Enter a character to send a command");
+                while (true)
+                {
+                    printMenu();
+                    //char henk = Console.ReadLine().ToString().ToCharArray()[0];
+                    char input = Console.ReadKey().KeyChar;
+                    Console.WriteLine("");
+                    chooseAction(input);
+                }
+            }).Start();
         }
         static void ListenThread()
         {
@@ -157,10 +188,45 @@ namespace RemoteHealthCare
             }
         }
 
+        private static void setupSimulator()
+        {
+            //Get Scene
+            sendAction(encapsulatePacket(EngineInteraction.getScene()));
+
+            Thread.Sleep(1000);
+            //Draw Panel
+            Uuids.TryGetValue("Camera", out string cameraUUID);
+            sendAction(encapsulatePacket(EngineInteraction.createPanel("panel", cameraUUID)));
+            Thread.Sleep(1000);
+            Uuids.TryGetValue("panel", out string panelUuid);
+            panel = new Panel(panelUuid);
+            panel.drawPanel();
+
+            Thread.Sleep(1000);
+            //Add Route
+            sendAction(encapsulatePacket(EngineInteraction.createRoute()));
+            Thread.Sleep(1000);
+            Uuids.TryGetValue("Route0", out string routeUUID);
+            sendAction(encapsulatePacket(EngineInteraction.addRoad(routeUUID, 0.5)));
+
+            Thread.Sleep(1000);
+            //Remove Groundplane
+            if (Uuids.TryGetValue("GroundPlane", out string groundUUID))
+            {
+                sendAction(encapsulatePacket(EngineInteraction.removeObject(groundUUID)));
+                Uuids.Remove("GroundPlane");
+            }
+
+            Thread.Sleep(1000);
+            //Change SkyBox
+            sendAction(encapsulatePacket(EngineInteraction.changeSkyBoxTexture()));
+
+            sendAction(encapsulatePacket(EngineInteraction.addObject(1, 1, 1, 1, "bike", cameraUUID)));
+        }
+
         private static void chooseAction(char character)
         {
             character = char.ToLower(character);
-            Panel panel;
             string json = "temp";
             bool sendMessage = true;
             string routeName, objectName, routeUUID, objectUUID;
@@ -198,8 +264,6 @@ namespace RemoteHealthCare
                     }
                 case 'f':
                     {
-                        Console.WriteLine("Insert name");
-                        string name = Console.ReadLine();
                         Uuids.TryGetValue("Camera", out string cameraUUID);
                         json = encapsulatePacket(EngineInteraction.createPanel("panel", cameraUUID));
                         break;
@@ -208,23 +272,6 @@ namespace RemoteHealthCare
                     {
                         Uuids.TryGetValue("panel", out string panelUUID);
                         json = encapsulatePacket(EngineInteraction.clearPanel(panelUUID));
-                        break;
-                    }
-                case 'h':
-                    {
-
-                        Uuids.TryGetValue("Route0", out routeUUID);
-                        json = encapsulatePacket(EngineInteraction.addRoad(routeUUID, 0.5));
-                        break;
-                    }
-                case 'i':
-                    {
-                        json = encapsulatePacket(EngineInteraction.createRoute(50, 50, 5, -5));
-                        break;
-                    }
-                case 'j':
-                    {
-                        json = encapsulatePacket(EngineInteraction.debugRoute(true));
                         break;
                     }
                 case 'k':
@@ -239,7 +286,9 @@ namespace RemoteHealthCare
                         double y = double.Parse(Console.ReadLine());
                         Console.WriteLine("Insert z");
                         double z = double.Parse(Console.ReadLine());
-                        json = encapsulatePacket(EngineInteraction.addObject(scale, x, y, z, name));
+
+                        Uuids.TryGetValue("Camera", out string cameraUUID);
+                        json = encapsulatePacket(EngineInteraction.addObject(scale, x, y, z, name, cameraUUID));
                         break;
                     }
                 case 'l':
@@ -256,12 +305,8 @@ namespace RemoteHealthCare
                     }
                 case 'm':
                     {
-                        Console.WriteLine("What Object?");
-                        objectName = Console.ReadLine();
-                        Console.WriteLine("What route?");
-                        routeName = Console.ReadLine();
-                        Uuids.TryGetValue(objectName, out objectUUID);
-                        Uuids.TryGetValue(routeName, out routeUUID);
+                        Uuids.TryGetValue("Camera", out objectUUID);
+                        Uuids.TryGetValue("Route0", out routeUUID);
                         json = encapsulatePacket(EngineInteraction.followRoute(routeUUID, objectUUID));
                         Console.WriteLine(json);
                         break;
@@ -294,11 +339,35 @@ namespace RemoteHealthCare
                         json = encapsulatePacket(EngineInteraction.swapPanel(panelUUID));
                         break;
                     }
+                case 'r':
+                    {
+                        json = encapsulatePacket(EngineInteraction.changeSkyBoxTexture());
+                        break;
+                    }
                 case 't':
                     {
                         Uuids.TryGetValue("panel", out string panelUUID);
-                        panel = new Panel(panelUUID);
                         panel.drawPanel();
+                        sendMessage = false;
+                        break;
+                    }
+                case 'v':
+                    {
+                        Console.WriteLine("What text?");
+                        string text = ": " + Console.ReadLine();
+                        Console.WriteLine("What resistance?");
+                        int resistance = int.Parse(Console.ReadLine());
+                        TimeSpan elapsedTime = stopwatch.Elapsed;
+                        string time = "" + elapsedTime.Minutes + ":" + elapsedTime.Seconds + " ";
+                        string time2 = "" + elapsedTime.Minutes.ToString("00") + ":" + elapsedTime.Seconds.ToString("00") + " ";
+                        Console.WriteLine("What speed?");
+                        float speed = float.Parse(Console.ReadLine());
+                        panel.chatList.Add(time2 + text);
+                        panel.speed = speed;
+                        panel.resistance = resistance;
+
+                        panel.drawValues();
+
                         sendMessage = false;
                         break;
                     }
@@ -796,6 +865,28 @@ namespace RemoteHealthCare
             Console.WriteLine("Invoked TODO Method>'updateSkyBoxTime(double t)'");
         }
 
+        public static object changeSkyBoxTexture()
+        {
+            string filepath = "data/NetworkEngine/textures/SkyBoxes/mp_mandaris/";
+            return new
+            {
+                id = "scene/skybox/update",
+                data = new
+                {
+                    type = "static",
+                    files = new
+                    {
+                        xpos = filepath + "mandaris_rt.tga",
+                        xneg = filepath + "mandaris_lf.tga",
+                        ypos = filepath + "mandaris_up.tga",
+                        yneg = filepath + "mandaris_dn.tga",
+                        zpos = filepath + "mandaris_bk.tga",
+                        zneg = filepath + "mandaris_ft.tga"
+                    }
+                }
+            };
+        }
+
         #endregion
 
         #region Road 
@@ -841,8 +932,9 @@ namespace RemoteHealthCare
         // where p1 & p2 are positions so p1=50 & p2=50 means you get a square shaped route 
         // where t1 & t2 are direction, the directions mean the shaping of the route, if the directions are t1 = 0 & t2 = 0. You get straight lines
         // so when you want a smoother route tweak the t1 & t2 parameters.
-        public static object createRoute(int p1, int p2, int t1, int t2)
+        public static object createRoute()
         {
+            int tr = 15;
             return new
             {
                 id = "route/add",
@@ -851,16 +943,35 @@ namespace RemoteHealthCare
                     nodes = new[]
                     {
                         new { pos = new[] { 0,0,0 },
-                        dir = new[] { t1,0,t2 } },
+                        dir = new[] { tr, 0, tr } },
 
-                        new { pos = new[] { p1,0,0 },
-                        dir = new[] { t1,0,t1 } },
+                        new { pos = new[] { 50,0,0 },
+                        dir = new[] { tr, 0, tr } },
 
-                        new { pos = new[] { p1,0,p2 },
-                        dir = new[] { t2,0,t1 } },
+                        new { pos = new[] { 50,0,25 },
+                        dir = new[] { -tr, 0, tr } },
 
-                        new { pos = new[] { 0,0,p2 },
-                        dir = new[] { t2,0,t2 } }
+                        new { pos = new[] { 25,0,25 },
+                        dir = new[] { -tr, 0,-tr } },
+
+                        new { pos = new[] { 25,0,-25 },
+                        dir = new[] { -tr, 0,-tr } },
+
+                        new { pos = new[] { 0,0,-25 },
+                        dir = new[] { -tr, 0, tr } },
+
+
+                        //new { pos = new[] { 0,0,0 },
+                        //dir = new[] { 45,-90,45 } },
+
+                        //new { pos = new[] { p1,0,0 },
+                        //dir = new[] { t1,0,t1 } },
+
+                        //new { pos = new[] { p1,0,p2 },
+                        //dir = new[] { t2,0,t1 } },
+
+                        //new { pos = new[] { 0,0,p2 },
+                        //dir = new[] { t2,0,t2 } }
                     }
                 }
             };
@@ -895,8 +1006,10 @@ namespace RemoteHealthCare
 
                         new { index = 3,
                         pos = new[] { 0,0,p2 },
-                        dir = new[] { t2,0,t2 } }
-                    }
+                        dir = new[] { t2,0,t2 }
+
+                        }
+                }
                 }
             };
         }
@@ -915,7 +1028,7 @@ namespace RemoteHealthCare
                     rotate = "XYZ", // can be set to NONE, XZ or XYZ
                     smoothing = 1.0, // how smooth the node moves on the route?
                     followheigth = true, //set bool to follow the terrain height
-                    rotateOffset = new[] { 0, Math.PI / 180 * 90, 0 },
+                    rotateOffset = new[] { 0, 0, 0 },
                     positionOffset = new[] { 0, 0, 0 }
                 }
             };
@@ -961,7 +1074,7 @@ namespace RemoteHealthCare
         #endregion
 
         #region Other 
-        public static object addObject(double scale, double x, double y, double z, string name)
+        public static object addObject(double scale, double x, double y, double z, string name, string parent)
         {
             return new
             {
@@ -969,17 +1082,18 @@ namespace RemoteHealthCare
                 data = new
                 {
                     name = name,
+                    parent = parent,
                     components = new
                     {
                         transform = new
                         {
-                            position = new[] { x, y, z },
-                            rotation = new[] { (float)(Math.PI / 180 * 45), (float)(Math.PI / 180 * 45), (float)(Math.PI / 180 * 45) },
+                            position = new[] { 0, 0, 0 },
+                            rotation = new[] { 0, -90, 0 },
                             scale = scale
                         },
                         model = new
                         {
-                            file = "data/NetworkEngine/models/minecraft/minecraft-steve.obj",
+                            file = "data/NetworkEngine/models/bike/bike.fbx",
                             animated = false,
                             animation = "animationname"
                         }
@@ -1007,10 +1121,17 @@ namespace RemoteHealthCare
 
     #endregion
 
-    public class Panel {
+    public class Panel
+    {
         public string nodeID { get; set; }
-        public Panel(string nodeID) {
+
+        public float speed;
+        public int resistance;
+        public ArrayList chatList { get; set; }
+        public Panel(string nodeID)
+        {
             this.nodeID = nodeID;
+            this.chatList = new ArrayList();
 
             App.sendAction(App.encapsulatePacket(EngineInteraction.clearPanel(nodeID)));
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
@@ -1018,28 +1139,70 @@ namespace RemoteHealthCare
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
         }
 
-        public void drawPanel() {
+        public void drawPanel()
+        {
 
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
             //Background
+            App.sendAction(App.encapsulatePacket(EngineInteraction.clearPanel(nodeID)));
 
             //Outlines
             App.sendAction(App.encapsulatePacket(drawOutLines()));
 
             //Text
-            App.sendAction(App.encapsulatePacket(drawText("Speed",2)));
+            App.sendAction(App.encapsulatePacket(drawText("Speed", 2, 0, 40)));
+            App.sendAction(App.encapsulatePacket(drawText("m/s", 3, 10, 60)));
 
-            App.sendAction(App.encapsulatePacket(drawText("Resistance", 6)));
+            App.sendAction(App.encapsulatePacket(drawText("Resistance", 6, 0, 40)));
 
-            App.sendAction(App.encapsulatePacket(drawText("Chat", 11)));
-
-            drawResistance(7);
+            App.sendAction(App.encapsulatePacket(drawText("Chat", 11, 0, 40)));
 
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
-
         }
 
-        public object drawText(string text,int cell)
+
+        public void drawValues()
+        {
+            drawPanel();
+            App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
+            App.sendAction(App.encapsulatePacket(drawText("" + this.speed, 3, 7, 60)));
+            int counter = 0;
+
+            ArrayList temp = new ArrayList();
+            if (this.chatList.Count >= 5)
+            {
+                temp.Add(chatList[chatList.Count - 4]);
+                temp.Add(chatList[chatList.Count - 3]);
+                temp.Add(chatList[chatList.Count - 2]);
+                temp.Add(chatList[chatList.Count - 1]);
+            }
+            else {
+                temp = chatList;
+            }
+
+            foreach (string text in temp)
+            {
+                App.sendAction(App.encapsulatePacket(drawText(text, 12 + counter, 0, 40)));
+                counter++;
+            }
+
+            drawResistance(this.resistance);
+            App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
+        }
+
+        public void drawResistance(int value)
+        {
+            if (value > 7)
+            {
+                value = 7;
+            }
+            for (int i = 0; i < value; i++)
+            {
+                App.sendAction(App.encapsulatePacket(drawResistanceBlock(i)));
+            }
+        }
+
+        public object drawText(string text, int row, int column, int size)
         {
             int s = 32;
             return new
@@ -1049,14 +1212,15 @@ namespace RemoteHealthCare
                 {
                     id = nodeID,
                     text = text,
-                    position = new[] { s*1.15, s*(cell - 0.25) },
-                    size = 40,
+                    position = new[] { s * (column + 1.15), s * (row - 0.25) },
+                    size = size,
                     color = new[] { 1, 1, 1, 1 }
                 }
             };
         }
 
-        public object drawOutLines() {
+        public object drawOutLines()
+        {
             int s = 32;
             int sH = 16;
             return new
@@ -1095,9 +1259,9 @@ namespace RemoteHealthCare
                         new [] { s, s*6,s*6, s*6, 1,1,1,1 },
 
                         //Resistance Value Box
-                        new [] { s*1 + sH, s* 6 + sH, s* 14 + sH, s* 6 + sH, 1,1,1,1 },
-                        new [] { s*14 + sH, s* 8 + sH, s* 14 + sH, s* 6 + sH, 1,1,1,1 },
-                        new [] { s*14 + sH, s* 8 + sH, s* 1 + sH, s* 8 + sH, 1,1,1,1 },
+                        new [] { s*1 + sH, s* 6 + sH, s* 14 + sH -3, s* 6 + sH, 1,1,1,1 },
+                        new [] { s*14 + sH -3, s* 8 + sH, s* 14 + sH -3, s* 6 + sH, 1,1,1,1 },
+                        new [] { s*14 + sH -3, s* 8 + sH, s* 1 + sH, s* 8 + sH, 1,1,1,1 },
                         new [] { s*1 + sH, s* 6 + sH, s* 1 + sH, s* 8 + sH, 1,1,1,1 },
 
                         //Chat Box
@@ -1123,12 +1287,6 @@ namespace RemoteHealthCare
             };
         }
 
-        public void drawResistance(int value) {
-            for (int i = 0; i < value; i++) {
-                App.sendAction(App.encapsulatePacket(drawResistanceBlock(i)));
-            }
-        }
-
         public object drawResistanceBlock(int value)
         {
             int s = 32;
@@ -1152,9 +1310,23 @@ namespace RemoteHealthCare
                         },
                         new [] {
                             1.5 * s + value*x,
+                            6.875 * s,
+                            1.5 * s + (value + 1) * x,
+                            6.875 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+                        new [] {
+                            1.5 * s + value*x,
                             7.125 * s,
                             1.5 * s + (value + 1) * x,
                             7.125 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+                        new [] {
+                            1.5 * s + value*x,
+                            7.375 * s,
+                            1.5 * s + (value + 1) * x,
+                            7.375 *s,
                             value /7f,(7-value)/7f,0,1
                         },
                         new [] {
@@ -1166,12 +1338,25 @@ namespace RemoteHealthCare
                         },
                         new [] {
                             1.5 * s + value*x,
+                            7.875 * s,
+                            1.5 * s + (value + 1) * x,
+                            7.875 *s,
+                            value /7f,(7-value)/7f,0,1
+                        },
+                        new [] {
+                            1.5 * s + value*x,
                             8.125 * s,
                             1.5 * s + (value + 1) * x,
                             8.125 *s,
                             value /7f,(7-value)/7f,0,1
                         },
-
+                        new [] {
+                            1.5 * s + value*x,
+                            8.375 * s,
+                            1.5 * s + (value + 1) * x,
+                            8.375 *s,
+                            value /7f,(7-value)/7f,0,1
+                        }
                         /*
                         [0, 0, 100, 10, 0, 0, 0, 1, // x1,y1, x2,y2, r,g,b,a ]
                         */
@@ -1179,5 +1364,6 @@ namespace RemoteHealthCare
                 }
             };
         }
+
     }
 }
