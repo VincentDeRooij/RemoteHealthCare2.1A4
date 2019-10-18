@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using RHCCore.Networking.Models;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -23,16 +25,54 @@ namespace RHCDocter.Pages
     /// </summary>
     public partial class MainPage : Page
     {
-        private List<MainWindow.Person> listPersons; //TODO: get docter his clients 
+        private List<Person> listPersons; //TODO: get docter his clients 
         //private List<MainWindow.Session> listSession; //TODO: get archived sessions 
         private bool userOnline; //aka currentSelectedUserIsOnline 
         public List<SessionWindow> activeSessionWindows { get; }
+        public static List<Person> persons { get; set; }
 
         public MainPage()
         {
             InitializeComponent();
             InitSettings();
             activeSessionWindows = new List<SessionWindow>();
+            listPersons = new List<Person>();
+            App.TcpClientWrapper.OnReceived += OnReceived;
+            App.TcpClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "clients/get",
+            });
+
+            System.Timers.Timer timer = new System.Timers.Timer(250);
+            timer.Elapsed += (x, y) =>
+            {
+                App.TcpClientWrapper.NetworkConnection.Write(new
+                {
+                    Command = "clients/get"
+                });
+            };
+            timer.Start();
+        }
+
+        private void OnReceived(RHCCore.Networking.IConnection connection, dynamic args)
+        {
+            string command = args.Command;
+            if (command == "clients/list")
+            {
+                List<dynamic> persons = (args.Data as JArray).ToObject<List<dynamic>>();
+                foreach (var item in persons)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        Person p = (item.Person as JObject).ToObject<Person>();
+                        if (!(listPersons.Where(x => x.Username == p.Username).Count() > 0) && !p.IsDoctor)
+                        {
+                            AddPersonToView(p.Name);
+                            listPersons.Add(p);
+                        }
+                    });
+                }
+            }
         }
 
         private void InitSettings()
@@ -40,16 +80,6 @@ namespace RHCDocter.Pages
             ClientsListBox.SelectionMode = SelectionMode.Single;
             ArchivedSessionsListBox.SelectionMode = SelectionMode.Single;
 
-
-
-            generatePersons();
-
-            foreach (MainWindow.Person person in listPersons)
-            {
-                AddPersonToView(person.BSN);
-            }
-
-            userOnline = true;
             //AddMessageToView(true, "DokterMessage");
             //AddMessageToView(false, "ClientMSG");
 
@@ -66,26 +96,26 @@ namespace RHCDocter.Pages
 
         private void generatePersons()
         {
-            //Generate static persons 
-            listPersons = new List<MainWindow.Person>()
-            {
-                new MainWindow.Person("Jaap", "BSN01234567"),
-                new MainWindow.Person("Piet", "BSN12345678"),
-                new MainWindow.Person("Peter", "BSN23456789")
-            };
-            //Add archived sessions 
-            listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName1", 27, true));
-            listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName2", 27, true));
-            listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName3", 27, true));
-            listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName4", 27, true));
-            //Add messages  
-            listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Hallo Jaap"));
-            listPersons[0].messages.Add(new MainWindow.Person.Message(false, "Hallo Pannenkoek"));
-            listPersons[0].messages.Add(new MainWindow.Person.Message(true, "HJB Mongool"));
-            listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Sterf RN"));
-            listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Ik start de sessie zo, dus ga maar op de fiets zitten"));
-            listPersons[1].messages.Add(new MainWindow.Person.Message(false, "Okay ik neem plaats"));
-            listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Top! Dan start ik hem nu!"));
+            ////Generate static persons 
+            //listPersons = new List<MainWindow.Person>()
+            //{
+            //    new MainWindow.Person("Jaap", "BSN01234567"),
+            //    new MainWindow.Person("Piet", "BSN12345678"),
+            //    new MainWindow.Person("Peter", "BSN23456789")
+            //};
+            ////Add archived sessions 
+            //listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName1", 27, true));
+            //listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName2", 27, true));
+            //listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName3", 27, true));
+            //listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName4", 27, true));
+            ////Add messages  
+            //listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Hallo Jaap"));
+            //listPersons[0].messages.Add(new MainWindow.Person.Message(false, "Hallo Pannenkoek"));
+            //listPersons[0].messages.Add(new MainWindow.Person.Message(true, "HJB Mongool"));
+            //listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Sterf RN"));
+            //listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Ik start de sessie zo, dus ga maar op de fiets zitten"));
+            //listPersons[1].messages.Add(new MainWindow.Person.Message(false, "Okay ik neem plaats"));
+            //listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Top! Dan start ik hem nu!"));
 
 
         }
@@ -93,8 +123,8 @@ namespace RHCDocter.Pages
         private void Button_Click_Send(object sender, RoutedEventArgs e)
         {
             String message = TXTBoxMessageSend.Text;
-            MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
-            p.messages.Add(new MainWindow.Person.Message(true, message));
+            Person p = listPersons[ClientsListBox.SelectedIndex];
+            p.Messages.Add(new ChatMessage(message, true));
             AddMessageToView(true, message);
             //TODO: Message to Server 
 
@@ -114,8 +144,8 @@ namespace RHCDocter.Pages
             {
 
                 //ClientsListBox.SelectedIndex
-                MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
-                MainWindow.Session session = new MainWindow.Session(TXTBoxNameSession.Text, int.Parse(TXTBoxTimeSession.Text));
+                Person p = listPersons[ClientsListBox.SelectedIndex];
+                Session session = new Session(TXTBoxNameSession.Text, DateTime.Now, int.Parse(TXTBoxTimeSession.Text));
                 SessionWindow sw = new SessionWindow(ref p, ref session);
                 activeSessionWindows.Add(sw);
                 sw.Show();
@@ -136,7 +166,7 @@ namespace RHCDocter.Pages
                         Dispatcher.Invoke(() => { isClosed = sw.IsClosed; });
 
 
-                        MainWindow.Person selectedPerson = null;
+                        Person selectedPerson = null;
                         Dispatcher.Invoke(() => { selectedPerson = listPersons[ClientsListBox.SelectedIndex]; });
 
                         foreach (SessionWindow s in activeSessionWindows)
@@ -164,7 +194,7 @@ namespace RHCDocter.Pages
         private void Button_Click_Confirm(object sender, RoutedEventArgs e)
         {
             int index = ArchivedSessionsListBox.SelectedIndex;
-            MainWindow.Session archivedSession = listPersons[ClientsListBox.SelectedIndex].archivedSessions[index];
+            Session archivedSession = listPersons[ClientsListBox.SelectedIndex].Sessions[index];
             Console.Out.WriteLine($"index: {index}");
 
             if (ClientsListBox.SelectedIndex < 0)
@@ -177,7 +207,7 @@ namespace RHCDocter.Pages
             }
             else
             {
-                MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+                Person p = listPersons[ClientsListBox.SelectedIndex];
                 SessionWindow sw = new SessionWindow(ref p, ref archivedSession);
                 sw.Show();
             }
@@ -203,21 +233,21 @@ namespace RHCDocter.Pages
                 BTNCreate.IsEnabled = false;
             }
 
-            MainWindow.Person p = listPersons[ClientsListBox.SelectedIndex];
+            Person p = listPersons[ClientsListBox.SelectedIndex];
 
             //Archived Sessions reset 
             resetArchivedSessionsView();
 
-            foreach (MainWindow.Session archivedSession in p.archivedSessions)
+            foreach (Session archivedSession in p.Sessions)
             {
-                AddArchivedSessionToView($"{archivedSession.name} - {archivedSession.sessionDate}");
+                AddArchivedSessionToView($"{archivedSession.Name} - {archivedSession.StartDate}");
             }
 
             //ChatMessages 
             resetMessagesView();
-            foreach (MainWindow.Person.Message message in p.messages)
+            foreach (ChatMessage message in p.Messages)
             {
-                AddMessageToView(message.isDocter, message.message);
+                AddMessageToView(message.IsDoctor, message.Message);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RHCCore.Networking.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,11 +12,11 @@ namespace RHCServer
     public class UserList
     {
         private static string USER_FILE = "ACCOUNTS.json";
-        public List<dynamic> users { get; set; }
+        public List<RHCCore.Networking.Models.Person> users { get; set; }
 
         public UserList()
         {
-            users = new List<dynamic>();
+            users = new List<Person>();
             if (!File.Exists(USER_FILE))
             {
                 FileStream fs = File.Create(USER_FILE);
@@ -36,13 +37,7 @@ namespace RHCServer
         public static void AddUser(string name, string username, string password, bool isDoctor = false)
         {
             UserList list = JsonConvert.DeserializeObject<UserList>(File.ReadAllText(USER_FILE));
-            list.users.Add(new
-            {
-                Naam = name,
-                Username = username,
-                Password = password,
-                IsDoctor = isDoctor
-            });
+            list.users.Add(new Person(name, username, password, isDoctor));
             File.WriteAllText(USER_FILE, JsonConvert.SerializeObject(list));
         }
 
@@ -52,7 +47,13 @@ namespace RHCServer
             return list.users.Where(x => x.Username == username && x.Password == password && x.IsDoctor == isDoctor).Count() > 0;
         }
 
-        public static dynamic GetUser(string username)
+        public static List<Person> GetPersons()
+        {
+            UserList list = JsonConvert.DeserializeObject<UserList>(File.ReadAllText(USER_FILE));
+            return list.users;
+        }
+
+        public static Person GetUser(string username)
         {
             UserList list = JsonConvert.DeserializeObject<UserList>(File.ReadAllText(USER_FILE));
             return list.users.Where(x => x.Username == username).FirstOrDefault();

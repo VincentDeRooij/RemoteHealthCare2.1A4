@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Networking\IConnection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Models\Person.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\NetworkConnection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\TcpClientWrapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\TcpServerWrapper.cs" />
