@@ -151,6 +151,7 @@ namespace RHCServer
 
                 case "dokter/history/request":
                     {
+                        logWriter.WriteLogText($"dokter request received for history data {args.Data.Patient}");
                         PatientData data = dataWriter.GetPatientData(args.Data.Patient);
                         dynamic json = JsonConvert.SerializeObject(data);
 
@@ -169,6 +170,7 @@ namespace RHCServer
 
         public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, int distance) 
         {
+            
             foreach (PatientData patient in PatientOverview.PatientDataBase)
             {
                 if (patient.patientID.Equals(patientID))
@@ -182,6 +184,7 @@ namespace RHCServer
                     bikeData.averageSpeed.Add(avgSpeed);
                     bikeData.currentSpeed.Add(curSpeed);
                     bikeData.distanceTraversed.Add(distance);
+                    logWriter.WriteLogText($"Bike data {bikeName} saved, {patientID}");
                 }
             }
         }
@@ -200,6 +203,7 @@ namespace RHCServer
                     heartData = patient.heartData;
                     heartData.currentHRTRate.Add(hrRate);
                     heartData.averageHRTRate.Add(heartData.CalcTotalAverageHR());
+                    logWriter.WriteLogText($"Heartrate data saved, {patientID}");
                 }
             }
         }

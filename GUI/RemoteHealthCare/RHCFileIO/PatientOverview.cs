@@ -19,13 +19,5 @@ namespace RHCFileIO
         {
             this.PatientDataBase = new List<PatientData>();
         }
-
-        public List<PatientData> HistoryData
-        {
-            get
-            {
-                return this.PatientDataBase;
-            }
-        }
     }
 }
