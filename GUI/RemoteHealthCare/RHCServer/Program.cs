@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using RemoteHealthCare.Devices;
 using RHCCore.Networking;
+using RHCFileIO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +16,9 @@ namespace RHCServer
     {
         private static TcpServerWrapper server;
         private static List<Tuple<IConnection, string, string>> validAuthKeys;
+
+        private static DataWriter dataWriter;
+        private static LogWriter logWriter;
 
         private static StationaryBike bike;
         private static HeartRateMonitor hrMonitor;
@@ -52,6 +56,7 @@ namespace RHCServer
             {
                 case "login/try":
                     {
+                        logWriter.WriteLogText("Server received loggin request");
                         string username = (string)args.Data.Username;
                         string password = (string)args.Data.Password;
 
@@ -60,6 +65,7 @@ namespace RHCServer
                             dynamic user = UserList.GetUser(username);
                             string authKey = Guid.NewGuid().ToString();
                             validAuthKeys.Add(new Tuple<IConnection, string, string>(client, authKey.ToString(), user.Name));
+                            logWriter.WriteLogText($"Server accepted login, added client, {user.name}, with {authKey}");
                             client.Write(new
                             {
                                 Command = "login/authenticated",
@@ -71,6 +77,7 @@ namespace RHCServer
                         }
                         else
                         {
+                            logWriter.WriteLogText("Server refused login connection, username and password incorrect");
                             client.Write(new
                             {
                                 Command = "login/refused",
@@ -79,9 +86,10 @@ namespace RHCServer
                     }
                     break;
 
-                case "user/push/heartrate":
+                case "user/push/bike":
                     {
-                        dynamic data = args.data;
+                        logWriter.WriteLogText($"Server got bike data, from bike {args.Data.bike_name}");
+                        dynamic data = args.Data;
 
                         data.bike_name = bike.DeviceName;
                         data.average_speed = bike.AverageSpeed;
@@ -90,8 +98,9 @@ namespace RHCServer
                         break;
                     }
 
-                case "user/push/bike":
+                case "user/push/heart":
                     {
+                        logWriter.WriteLogText("Server got heart data");
                         dynamic data = args.data;
 
                         data.current_hr = hrMonitor.HeartRate;
@@ -100,12 +109,14 @@ namespace RHCServer
 
                 case "client/add":
                     {
+                        logWriter.WriteLogText($"Server added client, {args.Data.Name}");
                         UserList.AddUser(args.Data.Name, args.Data.Username, args.Data.Password);
                     }
                     break;
 
                 case "clients/get":
                     {
+                        logWriter.WriteLogText($"Server got client request");
                         client.Write(new
                         {
                             Command = "clients/sent",
@@ -119,8 +130,10 @@ namespace RHCServer
 
                 case "doctor/login":
                     {
+                        logWriter.WriteLogText($"Server got dokter login request");
                         if (UserList.UserExists((string)args.Data.Username, (string)args.Data.Password, true))
                         {
+                            logWriter.WriteLogText($"Server accepted dokter login request from {args.Data.Username}");
                             client.Write(new
                             {
                                 Command = "login/accepted"
@@ -128,6 +141,7 @@ namespace RHCServer
                         }
                         else
                         {
+                            logWriter.WriteLogText($"Server refused connection from {args.Data.Username}");
                             client.Write(new
                             {
                                 Command = "login/refused"
@@ -140,6 +154,7 @@ namespace RHCServer
 
         private static void OnNewClient(IConnection client, dynamic args)
         {
+            logWriter.WriteLogText($"Server got new client connection request from {client.RemoteEndPoint.Address}");
             Console.WriteLine($"CLIENT {client.RemoteEndPoint.Address} CONNECTED");
         }
     }
