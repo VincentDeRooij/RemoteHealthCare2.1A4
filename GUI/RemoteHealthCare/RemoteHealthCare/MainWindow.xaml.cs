@@ -47,7 +47,7 @@ namespace RemoteHealthCare
 #else
                 IDevice selectedDevice = ((string)x).Contains("Tacx") ? new Devices.StationaryBike((string)x) : null;
 #endif
-
+                
                 if (!devices.Contains(selectedDevice))
                 {
                     devices.Add(selectedDevice);
