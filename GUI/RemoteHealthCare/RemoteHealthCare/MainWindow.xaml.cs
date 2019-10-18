@@ -1,13 +1,17 @@
 ﻿#define MULTI_DEVICE
 
+using Avans.TI.BLE;
 using LiveCharts;
 using LiveCharts.Wpf;
 using RemoteHealthCare.Devices;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
@@ -25,16 +29,25 @@ namespace RemoteHealthCare
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    /// 
+
     public partial class MainWindow
     {
         List<IDevice> devices = new List<IDevice>();
         string authkey;
+        public float lastDistance;
+        public static StationaryBike bike;
+        public static  int counter = 0;
+        public static float totalspeed = 0;
+        public static Stopwatch stopwatch = new Stopwatch();
 
-        public MainWindow(string authkey)
+        public MainWindow(string authkey, string username)
         {
             InitializeComponent();
-            DataContext = this;
+            DataContext = this; 
             this.authkey = authkey;
+            bike = new StationaryBike(username, username);
+            BikeConnection();
         }
 
         private void OnConnectToDevice(object sender, RoutedEventArgs e)
@@ -45,9 +58,10 @@ namespace RemoteHealthCare
 #if SIM
                 IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
 #else
-                IDevice selectedDevice = ((string)x).Contains("Tacx") ? new Devices.StationaryBike((string)x) : null;
+                IDevice selectedDevice = ((string)x).Contains("Tacx") ? new Devices.StationaryBike((string)x,"") : null;
 #endif
-
+                Console.WriteLine(selectedDevice);
+                selectedDevice.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
                 if (!devices.Contains(selectedDevice))
                 {
                     devices.Add(selectedDevice);
@@ -56,6 +70,97 @@ namespace RemoteHealthCare
                 }
             };
             wndConnect.ShowDialog();
+        }
+
+        private void SelectedDevice_DeviceDataChanged(object sender, EventArgs e)
+        {
+            //bike = (StationaryBike)sender;
+            //if (bike.Distance != lastDistance)
+            //{
+            //    float distanceDifference = bike.Distance - lastDistance;
+            //    currentSpeed = (distanceDifference / 0.02f);
+            //    speedList.Add(currentSpeed);
+                
+            //    if (speedList.Count == 10) {
+            //        float totalspeed = 0;
+            //        foreach (float value in speedList) {
+            //            totalspeed += value;
+            //        }
+            //        speedList.Clear();
+            //        //Console.WriteLine($"Distance: {bike.Distance}\n Speed: {totalspeed/10}");
+            //    }
+            //}
+            //lastDistance = bike.Distance;
+            Console.WriteLine($"Distance: {bike.Distance}");
+
+        }
+
+        static async void BikeConnection()
+        {
+            int errorCode = 0;
+            BLE bleBike = new BLE();
+            BLE bleHeart = new BLE();
+            Thread.Sleep(1000); // We need some time to list available devices
+
+            // List available devices
+            List<String> bleBikeList = bleBike.ListDevices();
+            Console.WriteLine("Devices found: ");
+            foreach (var name in bleBikeList)
+            {
+                Console.WriteLine($"Device: {name}");
+            }
+
+            // Connecting
+            errorCode = errorCode = await bleBike.OpenDevice("Tacx Flux 24517");
+            // __TODO__ Error check
+
+            var services = bleBike.GetServices;
+            foreach (var service in services)
+            {
+                Console.WriteLine($"Service: {service}");
+            }
+
+            // Set service
+            errorCode = await bleBike.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
+            // __TODO__ error check
+
+            stopwatch.Start();
+
+            // Subscribe
+            bleBike.SubscriptionValueChanged += BleBike_SubscriptionValueChanged;
+            errorCode = await bleBike.SubscribeToCharacteristic("6e40fec2-b5a3-f393-e0a9-e50e24dcca9e");
+
+            // Heart rate
+            errorCode = await bleHeart.OpenDevice("Decathlon Dual HR");
+
+            await bleHeart.SetService("HeartRate");
+
+            bleHeart.SubscriptionValueChanged += BleBike_SubscriptionValueChanged;
+            await bleHeart.SubscribeToCharacteristic("HeartRateMeasurement");
+
+
+            Console.Read();
+        }
+        private static void BleBike_SubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
+        {
+            //Console.WriteLine("Received from {0}: {1}, {2}", e.ServiceName,
+            //    BitConverter.ToString(e.Data).Replace("-", " "),
+            //    Encoding.UTF8.GetString(e.Data));
+            bike.PushDataChange(e.Data);
+
+            Thread.Sleep(5);
+            counter++;
+
+            bike.currentSpeedData = bike.CurrentSpeed / 22;
+            bike.averageSpeedData = bike.AverageSpeed / 22;
+            bike.distanceData = bike.Distance * 1000;
+
+            if (counter % 10 == 0)
+            {
+                Console.WriteLine($"De current speed={bike.currentSpeedData}\nAverage Speed:{bike.averageSpeedData}\nDistance: {bike.distanceData}");
+            }
+
+            //Console.WriteLine($"Distance: {bike.Distance}\nSpeed: {bike.CurrentSpeed}");
         }
     }
 }

@@ -40,7 +40,13 @@ namespace RemoteHealthCare.Devices
 
         public string DeviceName => deviceName;
 
-        public StationaryBike(string deviceName)
+        public string deviceNameData;
+        public string userNameData;
+        public double currentSpeedData;
+        public double averageSpeedData;
+        public double distanceData;
+
+        public StationaryBike(string deviceName,string username)
             : base()
         {
             distanceTraveled = 0f;
@@ -49,6 +55,8 @@ namespace RemoteHealthCare.Devices
             averageSpeed = 0;
             averageSpeedCounted = 0;
             this.deviceName = deviceName;
+            this.deviceNameData = deviceName;
+            this.userNameData = username;
 #if !SIM
             Task.Run(async () =>
             {
@@ -86,8 +94,9 @@ namespace RemoteHealthCare.Devices
                         float dif = (generalData.Distance - lastGeneralData.Distance) / 1000.0f;
                         distanceTraveled += dif < 0 ? dif * -1 : dif;
                     }
-                    int currentSpeed = (generalData.PageData[5] << 8) | generalData.PageData[4];
+                    int currentSpeed = (generalData.PageData[5] << 4) | generalData.PageData[4];
                     this.currentSpeed = currentSpeed;
+                    Console.WriteLine(currentSpeed);
                     averageSpeed = ((averageSpeed * averageSpeedCounted) + currentSpeed) / ++averageSpeedCounted;
                     lastGeneralData = generalData;
                 }
@@ -95,7 +104,7 @@ namespace RemoteHealthCare.Devices
                 {
                     lastGeneralData = dataModel.DataPage as GeneralFEData;
                     averageSpeedCounted++;
-                    currentSpeed = (lastGeneralData.PageData[5] << 8) | lastGeneralData.PageData[4];
+                    currentSpeed = (lastGeneralData.PageData[5] << 4) | lastGeneralData.PageData[4];
                     averageSpeed = currentSpeed;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData != null)
