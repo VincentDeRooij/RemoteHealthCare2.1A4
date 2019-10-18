@@ -25,16 +25,6 @@ namespace RHCFileIO
             this.currentHRTRate = new List<int>();
         }
 
-        public void addAVGRate_Data(int data)
-        {
-            this.averageHRTRate.Add(data);
-        }
-
-        public void addCURRate_Data(int data)
-        {
-            this.currentHRTRate.Add(data);
-        }
-
         public int CalcTotalAverageHR() // calculates the mean average over the entire routine. 
         {
             int total = 0;
