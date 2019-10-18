@@ -155,23 +155,42 @@ namespace RHCServer
             }
         }
 
-        public static void SaveDataBikeData(string patientID) 
+        public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, int distance) 
         {
             foreach (PatientData patient in PatientOverview.PatientDataBase)
             {
                 if (patient.patientID.Equals(patientID))
                 {
-                    BikeData bikeData = patient.bikeData;
+                    BikeData bikeData;
+                    if (patient.bikeData == null)
+                    {
+                        bikeData = new BikeData(bikeName);
+                    }
+                    bikeData = patient.bikeData;
+                    bikeData.averageSpeed.Add(avgSpeed);
+                    bikeData.currentSpeed.Add(curSpeed);
+                    bikeData.distanceTraversed.Add(distance);
                 }
             }
         }
 
-        public static void SaveDataHeartData(string patientID)
+        public static void SaveDataHeartData(string patientID, int hrRate)
         {
-
+            foreach (PatientData patient in PatientOverview.PatientDataBase)
+            {
+                if (patient.patientID.Equals(patientID))
+                {
+                    HeartData heartData;
+                    if (patient.bikeData == null)
+                    {
+                        heartData = new HeartData();
+                    }
+                    heartData = patient.heartData;
+                    heartData.currentHRTRate.Add(hrRate);
+                    heartData.averageHRTRate.Add(heartData.CalcTotalAverageHR());
+                }
+            }
         }
-
-
 
         private static void OnNewClient(IConnection client, dynamic args)
         {

@@ -46,35 +46,5 @@ namespace RHCFileIO
             }
             return total / amountOfData;
         }
-
-        public void addAVG_RPM_Data(int data)
-        {
-            this.averageRPM.Add(data);
-        }
-
-        public void addCUR_RPM_Data(int data)
-        {
-            this.currentRPM.Add(data);
-        }
-
-        public void addAVG_Speed_Data(int data)
-        {
-            this.averageSpeed.Add(data);
-        }
-
-        public void addCUR_Speed_Data(int data)
-        {
-            this.currentSpeed.Add(data);
-        }
-
-        public void addTorque_Data(int data)
-        {
-            this.torque.Add(data);
-        }
-
-        public void addDistanceTraversed_Data(int data)
-        {
-            this.distanceTraversed.Add(data);
-        }
     }
 }
