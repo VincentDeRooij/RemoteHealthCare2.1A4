@@ -21,6 +21,7 @@ namespace RHCServer
             server = new TcpServerWrapper(new IPEndPoint(IPAddress.Any, 20000));
             await server.StartAsync();
 
+            new UserList();
             server.OnClientConnected += OnNewClient;
             server.OnClientDataReceived += OnDataReceived;
             server.OnClientDisconnected += OnClientDisconnected;
@@ -49,7 +50,7 @@ namespace RHCServer
                     {
                         string username = (string)args.Data.Username;
                         string password = (string)args.Data.Password;
-                        
+
                         if (UserList.UserExists(username, password))
                         {
                             dynamic user = UserList.GetUser(username);
@@ -72,13 +73,13 @@ namespace RHCServer
                             });
                         }
                     }
-                break;
+                    break;
 
                 case "client/add":
                     {
                         UserList.AddUser(args.Data.Name, args.Data.Username, args.Data.Password);
                     }
-                break;
+                    break;
 
                 case "clients/get":
                     {
@@ -86,6 +87,25 @@ namespace RHCServer
                         {
                             Users = validAuthKeys
                         });
+                    }
+                    break;
+
+                case "doctor/login":
+                    {
+                        if (UserList.UserExists((string)args.Data.Username, (string)args.Data.Password, true))
+                        {
+                            client.Write(new
+                            {
+                                Command = "login/accepted"
+                            });
+                        }
+                        else
+                        {
+                            client.Write(new
+                            {
+                                Command = "login/refused"
+                            });
+                        }
                     }
                 break;
             }

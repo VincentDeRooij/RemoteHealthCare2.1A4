@@ -20,6 +20,7 @@ Global
 		RHCCore\RHCCore.projitems*{0c6623af-2153-44f5-a1de-b3d24c39b3aa}*SharedItemsImports = 4
 		RHCCore\RHCCore.projitems*{4903a540-18ab-4a2c-aafd-e460791447c4}*SharedItemsImports = 13
 		RHCCore\RHCCore.projitems*{74567f2f-3591-4cc7-b86a-1a45e66ffda2}*SharedItemsImports = 4
+		RHCCore\RHCCore.projitems*{8f681af6-51bc-4921-9dc4-42f88fcb4341}*SharedItemsImports = 4
 		RHCCore\RHCCore.projitems*{9bf5ac8e-39ff-41ce-af70-0dabfd12fd69}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -24,7 +24,24 @@ namespace RHCDocter.pages
         public LoginPage()
         {
             InitializeComponent();
+            App.TcpClientWrapper.OnReceived += OnReceived;
+        }
 
+        private void OnReceived(RHCCore.Networking.IConnection connection, dynamic args)
+        {
+            string command = args.Command;
+            if (command == "login/accepted")
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    MainPage mainPage = new MainPage();
+                    this.NavigationService.Navigate(mainPage);
+                });
+            }
+            else
+            {
+                MessageBox.Show("Incorrect username or password", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Button_Click_Login(object sender, RoutedEventArgs e)
@@ -46,14 +63,17 @@ namespace RHCDocter.pages
             else
             {
                 Console.WriteLine($"Login Credentials: {usernameTXTBox.Text} : {passwordBox.Password}");
-                //TODO: Login Check 
-                MainPage mainPage = new MainPage();
 
-                //Window.GetWindow(this)
-                //this.ShowsNavigationUI.
-                this.NavigationService.Navigate(mainPage);
+                App.TcpClientWrapper.NetworkConnection.Write(new
+                {
+                    Command = "doctor/login",
+                    Data = new
+                    {
+                        Username = RHCCore.Security.Hashing.EncryptSHA256(usernameTXTBox.Text),
+                        Password = RHCCore.Security.Hashing.EncryptSHA256(passwordBox.Password)
+                    }
+                });
             }
-
         }
     }
 }
