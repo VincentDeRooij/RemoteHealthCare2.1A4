@@ -47,7 +47,7 @@ namespace RemoteHealthCare
 #else
                 IDevice selectedDevice = ((string)x).Contains("Tacx") ? new Devices.StationaryBike((string)x) : null;
 #endif
-
+                
                 if (!devices.Contains(selectedDevice))
                 {
                     devices.Add(selectedDevice);
@@ -56,6 +56,45 @@ namespace RemoteHealthCare
                 }
             };
             wndConnect.ShowDialog();
+        }
+
+        private void Button_Click_Send(object sender, RoutedEventArgs e)
+        {
+            String message = TXTBoxMessageSend.Text;
+            AddMessageToView(true, message);
+            //TODO: Message to Server 
+
+        }
+
+        private void AddMessageToView(bool isClientMessage, string message)
+        {
+            Label lbl = new Label();
+            TextBlock txtb = new TextBlock();
+
+            txtb.TextWrapping = System.Windows.TextWrapping.WrapWithOverflow;
+            txtb.Padding = new Thickness(5);
+            txtb.Text = message;
+
+            lbl.MaxWidth = 250;
+            lbl.HorizontalAlignment = HorizontalAlignment.Left;
+
+            lbl.BorderThickness = new Thickness(1);
+            lbl.BorderBrush = Brushes.DarkGray;
+            lbl.Margin = new Thickness(0, 5, 0, 5);
+
+            if (isClientMessage)
+            {
+                lbl.HorizontalAlignment = HorizontalAlignment.Right;
+                lbl.Background = Brushes.LightGray;
+            }
+            else
+            {
+                lbl.HorizontalAlignment = HorizontalAlignment.Left;
+                lbl.Background = Brushes.GhostWhite;
+            }
+
+            lbl.Content = txtb;
+            MessagesPanel.Children.Add(lbl);
         }
     }
 }

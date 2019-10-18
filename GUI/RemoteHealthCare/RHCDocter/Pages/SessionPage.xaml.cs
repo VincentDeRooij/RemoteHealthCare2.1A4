@@ -75,7 +75,7 @@ namespace RHCDocter.Pages
                 //Dispatcher.Invoke(new Action(() => { ProgressBar.Value++; }));
                 Thread.Sleep(1000);
             }
-
+            
             Dispatcher.Invoke(() => { BTNStop.IsEnabled = false; });
             //TODO: When Session is done: 
             //
