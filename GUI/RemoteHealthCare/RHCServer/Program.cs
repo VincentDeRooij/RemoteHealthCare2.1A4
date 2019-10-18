@@ -1,15 +1,11 @@
-﻿using RHCFileIO;
-using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using RemoteHealthCare.Devices;
 using RHCCore.Networking;
 using RHCFileIO;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RHCServer
 {
@@ -89,13 +85,22 @@ namespace RHCServer
                     break;
 
                 case "user/push/heartrate":
-                    {                   
+                    {
+
                         dynamic data = args.data;
-                        hrMonitor.HeartRate = data.current_hr;
+
+                        foreach (PatientData patientData in PatientOverview.HistoryData)
+                        {
+                            if (patientData.Equals(args.ID))
+                            {
+                                SaveDataHeartData(args.ID, data.current_hr);
+                            }
+                        }
+
                         break;
                     }
 
-                case "user/push/heart":
+                case "user/push/bike":
                     {
                         logWriter.WriteLogText("Server got heart data");
                         dynamic data = args.data;
@@ -103,6 +108,15 @@ namespace RHCServer
                         bike.averageSpeed = data.average_speed;
                         bike.currentSpeed = data.current_speed;
                         bike.Distance = data.Distance;
+
+                        foreach (PatientData patientData in PatientOverview.HistoryData)
+                        {
+                            if (patientData.Equals(args.ID))
+                            {
+                                SaveDataBikeData(args.ID, data.bike_name, data.average_speed, data.current_speed, data.distance);
+                            }
+                        }
+
                         break;
                     }
 
@@ -119,7 +133,7 @@ namespace RHCServer
                         client.Write(new
                         {
                             Command = "clients/sent",
-                            Data = new 
+                            Data = new
                             {
                                 Users = validAuthKeys
                             }
@@ -168,7 +182,7 @@ namespace RHCServer
             }
         }
 
-        public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, int distance) 
+        public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, int distance)
         {
             
             foreach (PatientData patient in PatientOverview.PatientDataBase)
