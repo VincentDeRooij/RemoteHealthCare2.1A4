@@ -88,16 +88,10 @@ namespace RHCServer
                     }
                     break;
 
-                case "user/push/bike":
-                    {
-                        logWriter.WriteLogText($"Server got bike data, from bike {args.Data.bike_name}");
-                        dynamic data = args.Data;
-
-                        data.bike_name = bike.DeviceName;
-                        data.average_speed = bike.AverageSpeed;
-                        data.current_speed = bike.CurrentSpeed;
-                        data.distance = bike.Distance;
-
+                case "user/push/heartrate":
+                    {                   
+                        dynamic data = args.data;
+                        hrMonitor.HeartRate = data.current_hr;
                         break;
                     }
 
@@ -105,8 +99,10 @@ namespace RHCServer
                     {
                         logWriter.WriteLogText("Server got heart data");
                         dynamic data = args.data;
-
-                        data.current_hr = hrMonitor.HeartRate;
+                        bike.deviceName = data.bike_name;
+                        bike.averageSpeed = data.average_speed;
+                        bike.currentSpeed = data.current_speed;
+                        bike.Distance = data.Distance;
                         break;
                     }
 

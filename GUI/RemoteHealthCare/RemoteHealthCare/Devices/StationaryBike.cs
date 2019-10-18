@@ -22,23 +22,23 @@ namespace RemoteHealthCare.Devices
         private int averageRPMCounted;
         private int averageRPM;
         private int AverageRPM => averageRPM;
-        private int currentSpeed;
+        public int currentSpeed;
         public int CurrentSpeed => currentSpeed;
 
         private int averageSpeedCounted;
-        private int averageSpeed;
+        public int averageSpeed;
         public int AverageSpeed => averageSpeed;
 
         public int CurrentRPM => lastBikeData.RPM;
 
         private float distanceTraveled;
-        public float Distance => distanceTraveled;
+        public float Distance { get; set; }
 
-        private string deviceName;
+        public string deviceName;
 
         public event EventHandler DeviceDataChanged;
 
-        public string DeviceName => deviceName;
+        private string DeviceName => deviceName;
 
         public StationaryBike(string deviceName)
             : base()
