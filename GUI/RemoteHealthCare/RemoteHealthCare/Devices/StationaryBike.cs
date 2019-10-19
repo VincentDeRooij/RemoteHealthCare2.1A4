@@ -40,6 +40,8 @@ namespace RemoteHealthCare.Devices
 
         private string DeviceName => deviceName;
 
+        string IDevice.DeviceName => deviceName;
+
         public string deviceNameData;
         public string userNameData;
         public double currentSpeedData;

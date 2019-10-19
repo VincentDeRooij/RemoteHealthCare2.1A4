@@ -46,9 +46,6 @@ namespace RemoteHealthCare
             serverClientWrapper = new TcpClientWrapper();
             serverClientWrapper.Connect(new System.Net.IPEndPoint(IPAddress.Parse("127.0.0.1"), 20000));
             Thread.Sleep(1000);
-            
-
-            
 
             Thread vrThread = new Thread(() =>
             {
@@ -112,7 +109,7 @@ namespace RemoteHealthCare
                     chooseAction(input);
                 }
             });
-            vrThread.Start();
+            //vrThread.Start();
         }
 
         static void ListenThread(NetworkStream stream)
