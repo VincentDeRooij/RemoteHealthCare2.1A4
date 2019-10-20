@@ -127,8 +127,14 @@ namespace RHCDocter.Pages
         private void Button_Click_Send(object sender, RoutedEventArgs e)
         {
             String message = TXTBoxMessageSend.Text;
-            Person p = listPersons[ClientsListBox.SelectedIndex];
+            Person p = persons[ClientsListBox.SelectedIndex].Person;
             p.Messages.Add(new ChatMessage(message, true));
+            App.TcpClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "chat/send",
+                data = message,
+                Key = persons[ClientsListBox.SelectedIndex].Key
+            });
             AddMessageToView(true, message);
         }
 
@@ -146,14 +152,15 @@ namespace RHCDocter.Pages
             {
                 Person p = persons[ClientsListBox.SelectedIndex].Person;
                 Session session = new Session(TXTBoxNameSession.Text, DateTime.Now, int.Parse(TXTBoxTimeSession.Text));
-                SessionWindow sw = new SessionWindow(ref p, ref session);
-                activeSessionWindows.Add(sw);
+                SessionWindow sw = new SessionWindow(ref p, ref session, persons[ClientsListBox.SelectedIndex].Key);
+                activeSessionWindows.Add(sw); 
                 sw.Show();
 
                 App.TcpClientWrapper.NetworkConnection.Write(new
                 {
                     Command = "session/create",
-                    Data = new {
+                    Data = new
+                    {
                         Key = persons[ClientsListBox.SelectedIndex].Key,
                         Session = session
                     }
@@ -217,7 +224,7 @@ namespace RHCDocter.Pages
             else
             {
                 Person p = persons[ClientsListBox.SelectedIndex].Person;
-                SessionWindow sw = new SessionWindow(ref p, ref archivedSession);
+                SessionWindow sw = new SessionWindow(ref p, ref archivedSession, persons[ClientsListBox.SelectedIndex].Key);
                 sw.Show();
             }
         }

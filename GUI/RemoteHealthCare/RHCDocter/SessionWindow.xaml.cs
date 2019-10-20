@@ -25,13 +25,15 @@ namespace RHCDocter
         public bool IsClosed { get; private set; }
         public Person person { get; set; }
 
-        public SessionWindow(ref Person person_, ref Session session_)
+        public string key { get; set; }
+        public SessionWindow(ref Person person_, ref Session session_, string key)
         {
+            this.key = key;
             InitializeComponent();
             person = person_;
             Title = $"Session '{person_.Name} : {person_.Username}' at {session_.StartDate} Session";
 
-            SessionPage sessionPage = new SessionPage(ref person_, ref session_);
+            SessionPage sessionPage = new SessionPage(ref person_, ref session_,this.key);
             SessionMainFrame.Navigate(sessionPage);
 
             SessionMainFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;

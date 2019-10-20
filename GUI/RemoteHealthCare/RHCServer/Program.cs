@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RHCCore.Networking;
 using RHCCore.Networking.Models;
 using RHCFileIO;
@@ -52,25 +53,26 @@ namespace RHCServer
             switch (command)
             {
                 case "session/create":
-                {
-                    string authkey = args.Data.Key;
-                    Session session = args.Data.Session;
-
-                    activeSessions.Add(session);
-                    IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
-                    if (clientConnection != null)
                     {
-                        clientConnection.Write(new
+                        string authkey = (string)args.Data.Key;
+                        Session session = (args.Data.Session as JObject).ToObject<Session>();
+                        
+
+                        activeSessions.Add(session);
+                        IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
+                        if (clientConnection != null)
                         {
-                            Command = "session/start",
-                            Data = new
+                            clientConnection.Write(new
                             {
-                                Session = session
-                            }
-                        });
+                                Command = "session/start",
+                                Data = new
+                                {
+                                    Session = session
+                                }
+                            });
+                        }
                     }
-                }
-                break;
+                    break;
 
                 case "login/try":
                     {
@@ -187,7 +189,7 @@ namespace RHCServer
                             });
                         }
                     }
-                break;
+                    break;
 
                 case "dokter/history/request":
                     {
@@ -198,19 +200,32 @@ namespace RHCServer
                         client.Write(new
                         {
                             Command = "history/patient",
-                            Data = new 
-                            { 
+                            Data = new
+                            {
                                 patient = json
                             }
                         });
                     }
-                break;
+                    break;
+
+                case "chat/send":
+                    {
+                        string key = (string)args.Key;
+                        authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault() ? .Item1.Write(args);
+                    }
+                    break;
+                case "resistance/send":
+                    {
+                        string key = (string)args.Key;
+                        authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault()?.Item1.Write(args);
+                    }
+                    break;
             }
         }
 
         public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, float distance)
         {
-            
+
             foreach (PatientData patient in PatientOverview.PatientDataBase)
             {
                 if (patient.patientID.Equals(patientID))

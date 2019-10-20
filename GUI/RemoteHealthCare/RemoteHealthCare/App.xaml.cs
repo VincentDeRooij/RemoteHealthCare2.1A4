@@ -115,7 +115,7 @@ namespace RemoteHealthCare
                     chooseAction(input);
                 }
             });
-            //vrThread.Start();
+            vrThread.Start();
         }
 
         static void ListenThread(NetworkStream stream)
@@ -200,13 +200,13 @@ namespace RemoteHealthCare
                             break;
                         case "bike/resistance":
                             var resistance = deserialized.data;
-                            panel.resistance = (int)resistance;
-                            panel.drawValues();
+                            Panel.resistance = (int)resistance;
+                            Panel.drawValues();
                             break;
                         case "bike/message":
                             var message = deserialized.data;
-                            panel.chatList.Add((string)message);
-                            panel.drawValues();
+                            Panel.chatList.Add((string)message);
+                            Panel.drawValues();
                             break;
                         default:
                             break;
@@ -227,7 +227,7 @@ namespace RemoteHealthCare
             Thread.Sleep(1000);
             Uuids.TryGetValue("panel", out string panelUuid);
             panel = new Panel(panelUuid);
-            panel.drawPanel();
+            Panel.drawPanel();
 
             //Add Route
             sendAction(encapsulatePacket(EngineInteraction.createRoute()));
@@ -371,7 +371,7 @@ namespace RemoteHealthCare
                 case 't':
                     {
                         Uuids.TryGetValue("panel", out string panelUUID);
-                        panel.drawPanel();
+                        Panel.drawPanel();
                         sendMessage = false;
                         break;
                     }
@@ -382,15 +382,14 @@ namespace RemoteHealthCare
                         Console.WriteLine("What resistance?");
                         int resistance = int.Parse(Console.ReadLine());
                         TimeSpan elapsedTime = stopwatch.Elapsed;
-                        string time = "" + elapsedTime.Minutes + ":" + elapsedTime.Seconds + " ";
                         string time2 = "" + elapsedTime.Minutes.ToString("00") + ":" + elapsedTime.Seconds.ToString("00") + " ";
                         Console.WriteLine("What speed?");
                         float speed = float.Parse(Console.ReadLine());
-                        panel.chatList.Add(time2 + text);
-                        panel.speed = speed;
-                        panel.resistance = resistance;
+                        Panel.chatList.Add(time2 + text);
+                        Panel.speed = speed;
+                        Panel.resistance = resistance;
 
-                        panel.drawValues();
+                        Panel.drawValues();
 
                         sendMessage = false;
                         break;
@@ -491,6 +490,8 @@ namespace RemoteHealthCare
                 id = "scene/get"
             };
         }
+
+
 
         public static object resetScene()
         {
@@ -1059,14 +1060,16 @@ namespace RemoteHealthCare
             };
         }
 
-        public static object updateFollowRouteSpeed(string nodeid, double newSpeed) // changes a given node speed
+        public static object updateFollowRouteSpeed(double newSpeed) // changes a given node speed
         {
+
+            App.Uuids.TryGetValue("Camera", out string objectUUID);
             return new
             {
                 id = "route/follow/speed",
                 data = new
                 {
-                    node = nodeid, // the value of the given node
+                    node = objectUUID, // the value of the given node
                     speed = newSpeed // the speed of the node
                 }
             };
@@ -1148,15 +1151,15 @@ namespace RemoteHealthCare
 
     public class Panel
     {
-        public string nodeID { get; set; }
+        public static string nodeID { get; set; }
 
-        public float speed;
-        public int resistance;
-        public ArrayList chatList { get; set; }
+        public static float speed;
+        public static int resistance;
+        public static ArrayList chatList { get; set; }
         public Panel(string nodeID)
         {
-            this.nodeID = nodeID;
-            this.chatList = new ArrayList();
+            Panel.nodeID = nodeID;
+            chatList = new ArrayList();
 
             App.sendAction(App.encapsulatePacket(EngineInteraction.clearPanel(nodeID)));
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
@@ -1164,7 +1167,7 @@ namespace RemoteHealthCare
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
         }
 
-        public void drawPanel()
+        public static void drawPanel()
         {
 
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
@@ -1186,15 +1189,15 @@ namespace RemoteHealthCare
         }
 
 
-        public void drawValues()
+        public static void drawValues()
         {
             drawPanel();
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
-            App.sendAction(App.encapsulatePacket(drawText("" + this.speed, 3, 7, 60)));
+            App.sendAction(App.encapsulatePacket(drawText("" + speed, 3, 7, 60)));
             int counter = 0;
 
             ArrayList temp = new ArrayList();
-            if (this.chatList.Count >= 5)
+            if (chatList.Count >= 5)
             {
                 temp.Add(chatList[chatList.Count - 4]);
                 temp.Add(chatList[chatList.Count - 3]);
@@ -1212,11 +1215,11 @@ namespace RemoteHealthCare
                 counter++;
             }
 
-            drawResistance(this.resistance);
+            drawResistance(resistance);
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
         }
 
-        public void drawResistance(int value)
+        public static void drawResistance(int value)
         {
             if (value > 7)
             {
@@ -1226,9 +1229,16 @@ namespace RemoteHealthCare
             {
                 App.sendAction(App.encapsulatePacket(drawResistanceBlock(i)));
             }
+
         }
 
-        public object drawText(string text, int row, int column, int size)
+        public static void addText(string text) {
+            TimeSpan elapsedTime = App.stopwatch.Elapsed;
+            string time2 = "" + elapsedTime.Minutes.ToString("00") + ":" + elapsedTime.Seconds.ToString("00") + " ";
+            chatList.Add(time2 + text);
+        }
+
+        public static object drawText(string text, int row, int column, int size)
         {
             int s = 32;
             return new
@@ -1245,7 +1255,7 @@ namespace RemoteHealthCare
             };
         }
 
-        public object drawOutLines()
+        public static object drawOutLines()
         {
             int s = 32;
             int sH = 16;
@@ -1313,7 +1323,7 @@ namespace RemoteHealthCare
             };
         }
 
-        public object drawResistanceBlock(int value)
+        public static object drawResistanceBlock(int value)
         {
             int s = 32;
             float x = 13 * 32 / 7;
