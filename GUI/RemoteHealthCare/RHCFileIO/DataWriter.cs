@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace RHCFileIO
 {
@@ -31,15 +32,18 @@ namespace RHCFileIO
 
         private DirectoryInfo dataSaveDirectory;
         private DirectoryInfo historyPath;
+        private DirectoryInfo patientListingPath;
+        private string patientListingFile;
+        public List<string> patients;
         private StreamWriter streamWriter;
         private string dataPathOutput;
         private bool appendBoolean;
 
-
         public DataWriter(PatientOverview history)
         {
             this.history = history;
-
+            this.patientListingPath = Directory.CreateDirectory(Directory.GetCurrentDirectory().Replace("Debug", "Patient"));
+            this.patientListingFile = CreateNewFile(patientListingPath.FullName, "patient.list");
             this.dataSaveDirectory = Directory.CreateDirectory(Directory.GetCurrentDirectory().Replace("Debug", "Data")); // save location of the server data pre-set directory for history saving and access
             this.historyPath = CreateSubFolder("DataHistory");
             this.dataPathOutput = Path.Combine(dataSaveDirectory.FullName, "Rando.data");
@@ -48,13 +52,13 @@ namespace RHCFileIO
 
         private void WriteStringToFile(string filePath, string dataString)
         {
-            if (File.Exists(Path.Combine(this.historyPath.FullName, filePath + ".data")))
+            if (File.Exists(Path.Combine(this.historyPath.FullName, filePath)) || (!(File.Exists(Path.Combine(this.patientListingPath.FullName, patientListingFile)))))
             {
-                this.appendBoolean = true;
+                this.appendBoolean = false;
             }
             else
             {
-                this.appendBoolean = false;
+                this.appendBoolean = true;
             }
             this.streamWriter = new StreamWriter(filePath, appendBoolean);
 
@@ -79,10 +83,67 @@ namespace RHCFileIO
             string jsonData = "";
             foreach (PatientData data in this.history.PatientDataBase)
             {
+                WritePatientIDs(data.patientID);
                 jsonData = JsonConvert.SerializeObject(data);
                 WriteStringToFile(CreateNewFile(this.historyPath.FullName, data.patientID + ".data"), jsonData);
             }
         }
+
+        public void WritePatientIDs(string patient) 
+        { 
+            if (File.Exists(Path.Combine(this.patientListingPath.FullName, patientListingFile)))
+            {
+                this.appendBoolean = true;
+            }
+            else
+            {
+                this.appendBoolean = false;
+            }
+            this.streamWriter = new StreamWriter(Path.Combine(this.historyPath.FullName, patientListingFile), appendBoolean);
+            streamWriter.Write(patient + "_");
+            streamWriter.Flush();
+            streamWriter.Close();
+        }
+        
+        public List<string> ReadPatients() 
+        {
+            List<string> patientIDs = new List<string>();
+            using (StreamReader streamReader = new StreamReader(Path.Combine(this.historyPath.FullName, patientListingFile)))
+            {
+                dynamic ids = streamReader.ReadToEnd();
+
+                string[] id = Regex.Split(ids, "_");
+                List<string> idList = id.ToList();
+               
+
+                foreach (var item in idList)
+                {
+                    bool duplicate = idList.Contains(item);
+                    try
+                    {
+                        if (duplicate && !patientIDs.Contains(item) && !item.Equals(""))
+                        {
+                            patientIDs.Add(item);
+                        }
+                        else
+                        {
+                            // filter to filter out any of the same occurances
+                        }
+                    }
+                    catch  (ArgumentOutOfRangeException) 
+                    { 
+                    
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        // catching the error
+                    }
+                }
+                streamReader.Close();
+                return patientIDs;
+            }
+        }
+        
 
         public void WriteHistoryOfPatient(PatientData data) 
         {
@@ -101,6 +162,17 @@ namespace RHCFileIO
             }
         }
 
+        public PatientOverview ReadAllData(List<string> ids) 
+        {
+            PatientOverview patientOverview = new PatientOverview();
+            foreach (var item in ids)
+            {
+                PatientData data = GetPatientData(item);
+                patientOverview.PatientDataBase.Add(data);
+            }
+            return patientOverview;
+        } 
+
         public string TestReadPatientData(string patientID)
         {
             return ReadPatientData(patientID);
@@ -110,7 +182,6 @@ namespace RHCFileIO
         {
             JObject jObject = JObject.Parse(ReadPatientData(patientID));
             dynamic dataObject = jObject.Value<JObject>().ToObject<PatientData>();
-
             return dataObject;
         }
 
@@ -149,12 +220,17 @@ namespace RHCFileIO
             DataWriter data = new DataWriter(new PatientOverview()); // new HistoryManager(); irrelevant for testing
             data.GetHistory = historyManager;
             data.WriteAllPatientsData();
+
+            data.patients = data.ReadPatients();
+
             string json = data.TestReadPatientData("Harry Harolds");
             Console.WriteLine(json);
             PatientData dataHH = data.GetPatientData("Harry Harolds");
             Console.WriteLine(dataHH.patientID);
             data.WriteHistoryOfPatient(dataOverviewHH3);
             Console.WriteLine(data.ReadPatientData("Harry Harolds-Other"));
+
+            PatientOverview patientOverview = data.ReadAllData(data.patients);
             //Console.WriteLine(dataOverviewHH3.patientID);
 
         }

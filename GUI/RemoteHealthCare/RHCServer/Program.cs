@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RHCCore.Networking;
@@ -24,6 +25,8 @@ namespace RHCServer
         {
             authkeys = new List<Tuple<IConnection, string, string>>();
             server = new TcpServerWrapper(new IPEndPoint(IPAddress.Any, 20000));
+            GatherFromFile(); // gathers the history of the server
+            SavePatientDataToFile(); // saves the data to file on a timer of 60sec
             await server.StartAsync();
 
             new UserList();
@@ -52,25 +55,25 @@ namespace RHCServer
             switch (command)
             {
                 case "session/create":
-                {
-                    string authkey = args.Data.Key;
-                    Session session = args.Data.Session;
-
-                    activeSessions.Add(session);
-                    IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
-                    if (clientConnection != null)
                     {
-                        clientConnection.Write(new
+                        string authkey = args.Data.Key;
+                        Session session = args.Data.Session;
+
+                        activeSessions.Add(session);
+                        IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
+                        if (clientConnection != null)
                         {
-                            Command = "session/start",
-                            Data = new
+                            clientConnection.Write(new
                             {
-                                Session = session
-                            }
-                        });
+                                Command = "session/start",
+                                Data = new
+                                {
+                                    Session = session
+                                }
+                            });
+                        }
                     }
-                }
-                break;
+                    break;
 
                 case "login/try":
                     {
@@ -187,30 +190,43 @@ namespace RHCServer
                             });
                         }
                     }
-                break;
+                    break;
+
+                // Gets the requested patient info from the PatientOverview object
+                // In-order to function the data which is received must be in order of Data.Patient
+
+                // so the send request on the dokter app will look like this.
+
+                //    {
+                //      Command = "dokter/history/request",
+                //          Data = new
+                //          {
+                //              Patient = {the given patientID/username}
+                //          }
+                //    });
 
                 case "dokter/history/request":
                     {
-                        //logWriter.WriteLogText($"dokter request received for history data {args.Data.Patient}");
+                        logWriter.WriteLogText($"dokter request received for history data {args.Data.Patient}");
                         PatientData data = dataWriter.GetPatientData(args.Data.Patient);
                         dynamic json = JsonConvert.SerializeObject(data);
 
                         client.Write(new
                         {
                             Command = "history/patient",
-                            Data = new 
-                            { 
+                            Data = new
+                            {
                                 patient = json
                             }
                         });
                     }
-                break;
+                    break;
             }
         }
 
         public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, float distance)
         {
-            
+
             foreach (PatientData patient in PatientOverview.PatientDataBase)
             {
                 if (patient.patientID.Equals(patientID))
@@ -246,6 +262,25 @@ namespace RHCServer
                     //logWriter.WriteLogText($"Heartrate data saved, {patientID}");
                 }
             }
+        }
+
+        private static void GatherFromFile() 
+        {
+            List<string> currentPatients = dataWriter.ReadPatients();
+            PatientOverview = dataWriter.ReadAllData(currentPatients);
+        }
+
+        private static void SavePatientDataToFile() 
+        {
+            Thread fileSavingThread = new Thread(() =>
+            {
+                while (true)
+                {
+                    dataWriter.WriteAllPatientsData();
+                    Thread.Sleep(60000);
+                }
+            });
+            
         }
 
         private static void OnNewClient(IConnection client, dynamic args)
