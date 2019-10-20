@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using RHCCore.Networking.Models;
+using RHCDocter.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -25,11 +26,9 @@ namespace RHCDocter.Pages
     /// </summary>
     public partial class MainPage : Page
     {
-        private List<Person> listPersons; //TODO: get docter his clients 
-        //private List<MainWindow.Session> listSession; //TODO: get archived sessions 
-        private bool userOnline; //aka currentSelectedUserIsOnline 
+        private List<Person> listPersons;
         public List<SessionWindow> activeSessionWindows { get; }
-        public static List<Person> persons { get; set; }
+        public List<PersonProxy> persons { get; set; }
 
         public MainPage()
         {
@@ -37,6 +36,7 @@ namespace RHCDocter.Pages
             InitSettings();
             activeSessionWindows = new List<SessionWindow>();
             listPersons = new List<Person>();
+            persons = new List<PersonProxy>();
             App.TcpClientWrapper.OnReceived += OnReceived;
             App.TcpClientWrapper.NetworkConnection.Write(new
             {
@@ -59,17 +59,47 @@ namespace RHCDocter.Pages
             string command = args.Command;
             if (command == "clients/list")
             {
-                List<dynamic> persons = (args.Data as JArray).ToObject<List<dynamic>>();
-                foreach (var item in persons)
+                List<PersonProxy> personProxies = (args.Data as JArray).ToObject<List<PersonProxy>>();
+                bool refreshedUser = false;
+                foreach (var proxy in personProxies)
+                {
+                    if (proxy.Person.IsDoctor)
+                        continue;
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (!persons.Any(x => x.Person.Name == proxy.Person.Name))
+                        {
+                            persons.Add(proxy);
+                            AddPersonToView(proxy.Person.Name);
+                        }
+                        else if (persons.Any(x => x.Person.Username == proxy.Person.Username && x.IsOnline != proxy.IsOnline))
+                        {
+                            for (int i = 0; i < persons.Count; i++)
+                            {
+                                PersonProxy p = persons[i];
+                                if (p.Person.Username == proxy.Person.Username)
+                                {
+                                    persons[i] = proxy;
+                                    refreshedUser = true;
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (refreshedUser)
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        Person p = (item.Person as JObject).ToObject<Person>();
-                        if (!(listPersons.Where(x => x.Username == p.Username).Count() > 0) && !p.IsDoctor)
+                        int selectedIndex = ClientsListBox.SelectedIndex;
+
+                        ClientsListBox.Items.Clear();
+                        foreach (PersonProxy item in persons)
                         {
-                            AddPersonToView(p.Name);
-                            listPersons.Add(p);
+                            AddPersonToView(item.Person.Name);
                         }
+                        ClientsListBox.SelectedIndex = selectedIndex;
                     });
                 }
             }
@@ -94,40 +124,12 @@ namespace RHCDocter.Pages
             }
         }
 
-        private void generatePersons()
-        {
-            ////Generate static persons 
-            //listPersons = new List<MainWindow.Person>()
-            //{
-            //    new MainWindow.Person("Jaap", "BSN01234567"),
-            //    new MainWindow.Person("Piet", "BSN12345678"),
-            //    new MainWindow.Person("Peter", "BSN23456789")
-            //};
-            ////Add archived sessions 
-            //listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName1", 27, true));
-            //listPersons[0].archivedSessions.Add(new MainWindow.Session("SessionName2", 27, true));
-            //listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName3", 27, true));
-            //listPersons[1].archivedSessions.Add(new MainWindow.Session("SessionName4", 27, true));
-            ////Add messages  
-            //listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Hallo Jaap"));
-            //listPersons[0].messages.Add(new MainWindow.Person.Message(false, "Hallo Pannenkoek"));
-            //listPersons[0].messages.Add(new MainWindow.Person.Message(true, "HJB Mongool"));
-            //listPersons[0].messages.Add(new MainWindow.Person.Message(true, "Sterf RN"));
-            //listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Ik start de sessie zo, dus ga maar op de fiets zitten"));
-            //listPersons[1].messages.Add(new MainWindow.Person.Message(false, "Okay ik neem plaats"));
-            //listPersons[1].messages.Add(new MainWindow.Person.Message(true, "Top! Dan start ik hem nu!"));
-
-
-        }
-
         private void Button_Click_Send(object sender, RoutedEventArgs e)
         {
             String message = TXTBoxMessageSend.Text;
             Person p = listPersons[ClientsListBox.SelectedIndex];
             p.Messages.Add(new ChatMessage(message, true));
             AddMessageToView(true, message);
-            //TODO: Message to Server 
-
         }
 
         private void Button_Click_Create(object sender, RoutedEventArgs e)
@@ -142,13 +144,20 @@ namespace RHCDocter.Pages
             }
             else
             {
-
-                //ClientsListBox.SelectedIndex
-                Person p = listPersons[ClientsListBox.SelectedIndex];
+                Person p = persons[ClientsListBox.SelectedIndex].Person;
                 Session session = new Session(TXTBoxNameSession.Text, DateTime.Now, int.Parse(TXTBoxTimeSession.Text));
                 SessionWindow sw = new SessionWindow(ref p, ref session);
                 activeSessionWindows.Add(sw);
                 sw.Show();
+
+                App.TcpClientWrapper.NetworkConnection.Write(new
+                {
+                    Command = "session/create",
+                    Data = new {
+                        Key = persons[ClientsListBox.SelectedIndex].Key,
+                        Session = session
+                    }
+                });
 
                 TXTBoxNameSession.Text = "";
                 TXTBoxTimeSession.Text = "";
@@ -167,7 +176,7 @@ namespace RHCDocter.Pages
 
 
                         Person selectedPerson = null;
-                        Dispatcher.Invoke(() => { selectedPerson = listPersons[ClientsListBox.SelectedIndex]; });
+                        Dispatcher.Invoke(() => { selectedPerson = persons[ClientsListBox.SelectedIndex].Person; });
 
                         foreach (SessionWindow s in activeSessionWindows)
                         {
@@ -207,47 +216,9 @@ namespace RHCDocter.Pages
             }
             else
             {
-                Person p = listPersons[ClientsListBox.SelectedIndex];
+                Person p = persons[ClientsListBox.SelectedIndex].Person;
                 SessionWindow sw = new SessionWindow(ref p, ref archivedSession);
                 sw.Show();
-            }
-        }
-
-        private void LB_Clients_SelectChanged(object sender, RoutedEventArgs e)
-        {
-            int index = ClientsListBox.SelectedIndex;
-            //TODO: check if user is online, and set bool 'userOnline' 
-            //Console.Out.WriteLine(index);
-            ClientUserName.Content = ClientsListBox.SelectedItem.ToString().Remove(0, 37);
-
-            if (userOnline)
-            {
-                ClientUserStatus.Content = "Online";
-                BTNSend.IsEnabled = true;
-                BTNCreate.IsEnabled = true;
-            }
-            else
-            {
-                ClientUserStatus.Content = "Offline";
-                BTNSend.IsEnabled = false;
-                BTNCreate.IsEnabled = false;
-            }
-
-            Person p = listPersons[ClientsListBox.SelectedIndex];
-
-            //Archived Sessions reset 
-            resetArchivedSessionsView();
-
-            foreach (Session archivedSession in p.Sessions)
-            {
-                AddArchivedSessionToView($"{archivedSession.Name} - {archivedSession.StartDate}");
-            }
-
-            //ChatMessages 
-            resetMessagesView();
-            foreach (ChatMessage message in p.Messages)
-            {
-                AddMessageToView(message.IsDoctor, message.Message);
             }
         }
 
@@ -258,8 +229,6 @@ namespace RHCDocter.Pages
             {
                 BTNConfirm.IsEnabled = true;
             }
-
-            //Console.Out.WriteLine(index);
         }
 
         private void CB_CreateOrArchive_Changed(object sender, RoutedEventArgs e)
@@ -280,8 +249,6 @@ namespace RHCDocter.Pages
                     Console.WriteLine("Default case");
                     break;
             }
-            //Console.Out.WriteLine(ComboBoxSelect.SelectedIndex);
-            //Console.Out.WriteLine(ComboBoxSelect.Items[ComboBoxSelect.SelectedIndex].ToString());
         }
 
         private void TXTBoxTimeSession_OnTextChanged(object sender, TextChangedEventArgs e)
@@ -293,7 +260,6 @@ namespace RHCDocter.Pages
             }
             else
             {
-                //Console.Out.WriteLine($"length: {text.Length}");
                 if (text.Length != 0)
                 {
                     string[] numbers = Regex.Split(text, @"\D+");
@@ -381,6 +347,41 @@ namespace RHCDocter.Pages
         private void resetMessagesView()
         {
             MessagesPanel.Children.Clear();
+        }
+
+        private void ClientsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ClientsListBox.Items.Count <= 0)
+                return;
+
+            PersonProxy proxy = persons[ClientsListBox.SelectedIndex];
+            Person p = proxy.Person;
+
+            if (proxy.IsOnline)
+            {
+                ClientUserStatus.Content = "Online";
+                BTNSend.IsEnabled = true;
+                BTNCreate.IsEnabled = true;
+            }
+            else
+            {
+                ClientUserStatus.Content = "Offline";
+                BTNSend.IsEnabled = false;
+                BTNCreate.IsEnabled = false;
+            }
+
+            resetArchivedSessionsView();
+
+            foreach (Session archivedSession in p.Sessions)
+            {
+                AddArchivedSessionToView($"{archivedSession.Name} - {archivedSession.StartDate}");
+            }
+
+            resetMessagesView();
+            foreach (ChatMessage message in p.Messages)
+            {
+                AddMessageToView(message.IsDoctor, message.Message);
+            }
         }
     }
 }

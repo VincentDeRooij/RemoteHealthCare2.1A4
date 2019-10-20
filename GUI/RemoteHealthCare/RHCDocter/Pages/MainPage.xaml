@@ -10,12 +10,7 @@
 
     <StackPanel Orientation="Horizontal" Background="Gray">
         <Border Height="600" Width="300" Background="White" Padding="0" Margin="1, 2">
-            <ListBox Name="ClientsListBox" SelectionChanged="LB_Clients_SelectChanged" HorizontalContentAlignment="Center" Background="White" BorderThickness="0" Padding="10, 5" Margin="0">
-                <!--<ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="LightGray" Padding="5">Mike</ListBoxItem>
-                <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Miloe</ListBoxItem>
-                <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Jan</ListBoxItem>
-                <ListBoxItem HorizontalContentAlignment="Left" Height="30" Width="260" Background="DarkGray" Padding="5">Piet</ListBoxItem>-->
-            </ListBox>
+            <ListBox Name="ClientsListBox" SelectionChanged="ClientsListBox_SelectionChanged" HorizontalContentAlignment="Center" Background="White" BorderThickness="0" Padding="10, 5" Margin="0" />
         </Border>
         <Border Height="600" Width="300" Background="White" Margin="1, 2">
             <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="false" Height="600" Width="300" Margin="0" Background="White">

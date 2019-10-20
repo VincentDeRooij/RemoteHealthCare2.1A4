@@ -44,8 +44,14 @@ namespace RemoteHealthCare
             Simulator.Simulator s = Simulator.Simulator.Instance;
 #endif
             serverClientWrapper = new TcpClientWrapper();
-            serverClientWrapper.Connect(new System.Net.IPEndPoint(IPAddress.Parse("127.0.0.1"), 20000));
-            Thread.Sleep(1000);
+            bool result = serverClientWrapper.Connect(new System.Net.IPEndPoint(IPAddress.Parse("127.0.0.1"), 20000));
+            
+            if (result == false)
+            {
+                MessageBox.Show("Could not connect to the server");
+                Environment.Exit(0);
+                return;
+            }
 
             Thread vrThread = new Thread(() =>
             {

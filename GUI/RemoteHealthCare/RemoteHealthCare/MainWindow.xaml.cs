@@ -4,6 +4,7 @@ using Avans.TI.BLE;
 using LiveCharts;
 using LiveCharts.Wpf;
 using RemoteHealthCare.Devices;
+using RHCCore.Networking.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,14 +41,53 @@ namespace RemoteHealthCare
         public static  int counter = 0;
         public static float totalspeed = 0;
         public static Stopwatch stopwatch = new Stopwatch();
+        Session activeSession;
+        bool sessionActive => activeSession != null;
 
         public MainWindow(string authkey, string username)
         {
             InitializeComponent();
             DataContext = this; 
             this.authkey = authkey;
-            bike = new StationaryBike(username, username);
-            BikeConnection();
+
+            App.serverClientWrapper.OnReceived += OnReceived;
+
+            //bike = new StationaryBike(username, username);
+            //BikeConnection();
+        }
+
+        private void OnReceived(RHCCore.Networking.IConnection connection, dynamic args)
+        {
+            string command = args.Command;
+            switch (command)
+            {
+                case "session/start":
+                {
+                    Session newSession = args.Data.Session;
+                    if (activeSession == null)
+                    {
+                        activeSession = newSession;
+                        new Thread(() =>
+                        {
+                            double startTime = newSession.StartDate.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                            double currentTime = startTime;
+                            while (currentTime - startTime < newSession.SessionDuration)
+                            {
+                                Thread.Sleep(10);
+                                currentTime = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                            }
+
+                            connection.Write(new
+                            {
+                                Command = "session/done",
+                            });
+
+                            activeSession = null;
+                        }).Start();
+                    }
+                }
+                break;
+            }
         }
 
         private void OnConnectToDevice(object sender, RoutedEventArgs e)
@@ -58,7 +98,7 @@ namespace RemoteHealthCare
 #if SIM
                 IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
 #else
-                IDevice selectedDevice = ((string)x).Contains("Tacx") ? new Devices.StationaryBike((string)x,"") : null;
+                IDevice selectedDevice = ((string)x).Contains("Tacx") || ((string)x).Contains("Decathlon") ? new Devices.StationaryBike((string)x,"") : null;
 #endif
                 Console.WriteLine(selectedDevice);
                 selectedDevice.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
@@ -91,7 +131,7 @@ namespace RemoteHealthCare
             //    }
             //}
             //lastDistance = bike.Distance;
-            Console.WriteLine($"Distance: {bike.Distance}");
+            //Console.WriteLine($"Distance: {bike.Distance}");
 
         }
 
@@ -141,6 +181,7 @@ namespace RemoteHealthCare
 
             Console.Read();
         }
+
         private static void BleBike_SubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
         {
             //Console.WriteLine("Received from {0}: {1}, {2}", e.ServiceName,

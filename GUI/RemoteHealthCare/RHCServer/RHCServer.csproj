@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.3-beta2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -58,10 +58,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RemoteHealthCare\RemoteHealthCare.csproj">
-      <Project>{9BF5AC8E-39FF-41CE-AF70-0DABFD12FD69}</Project>
-      <Name>RemoteHealthCare</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RHCFileIO\RHCFileIO.csproj">
       <Project>{68b96a8f-3a17-436e-be5c-0fa72d3a059a}</Project>
       <Name>RHCFileIO</Name>

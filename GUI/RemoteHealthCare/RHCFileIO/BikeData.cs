@@ -20,7 +20,7 @@ namespace RHCFileIO
         public List<int> averageRPM { get; set; }
         public List<int> currentRPM { get; set; }
         public List<int> torque { get; set; }
-        public List<int> distanceTraversed { get; set; }
+        public List<float> distanceTraversed { get; set; }
         public List<int> averageSpeed { get; set; }
         public List<int> currentSpeed { get; set; }
 
@@ -32,7 +32,7 @@ namespace RHCFileIO
             this.averageSpeed = new List<int>();
             this.currentSpeed = new List<int>();
             this.torque = new List<int>();
-            this.distanceTraversed = new List<int>();
+            this.distanceTraversed = new List<float>();
         }
 
         public int CalcTotalAverage(List<int> dataList) // calculates the mean average over the entire routine. 

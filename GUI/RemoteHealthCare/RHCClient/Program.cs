@@ -73,13 +73,13 @@ namespace RemoteHealthCare
         {
             try
             {
-                Console.WriteLine($"{this.bike.DeviceName} {this.bike.AverageSpeed} {this.bike.CurrentSpeed} {this.bike.Distance}");
+                Console.WriteLine($"{this.bike.deviceName} {this.bike.AverageSpeed} {this.bike.CurrentSpeed} {this.bike.Distance}");
                 return JsonConvert.SerializeObject(new
                 {
                     Command = "user/push/bike",
                     Data = new
                     {
-                        bike_name = $"{this.bike.DeviceName}",
+                        bike_name = $"{this.bike.deviceName}",
                         average_speed = $"{this.bike.AverageSpeed}",
                         current_speed = $"{this.bike.CurrentSpeed}",
                         distance = $"{this.bike.Distance}"

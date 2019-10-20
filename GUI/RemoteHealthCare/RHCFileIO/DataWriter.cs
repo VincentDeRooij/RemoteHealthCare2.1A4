@@ -77,7 +77,7 @@ namespace RHCFileIO
         public void WriteAllPatientsData()
         {
             string jsonData = "";
-            foreach (PatientData data in this.history.HistoryData)
+            foreach (PatientData data in this.history.PatientDataBase)
             {
                 jsonData = JsonConvert.SerializeObject(data);
                 WriteStringToFile(CreateNewFile(this.historyPath.FullName, data.patientID + ".data"), jsonData);
@@ -142,9 +142,9 @@ namespace RHCFileIO
 
             PatientData dataOverviewHH3 = new PatientData("Harry Harolds-Other", bikeData4, heartData4);
 
-            historyManager.HistoryData.Add(dataOverviewHH);
-            historyManager.HistoryData.Add(dataOverviewBH);
-            historyManager.HistoryData.Add(dataOverviewHH2);
+            historyManager.PatientDataBase.Add(dataOverviewHH);
+            historyManager.PatientDataBase.Add(dataOverviewBH);
+            historyManager.PatientDataBase.Add(dataOverviewHH2);
 
             DataWriter data = new DataWriter(new PatientOverview()); // new HistoryManager(); irrelevant for testing
             data.GetHistory = historyManager;

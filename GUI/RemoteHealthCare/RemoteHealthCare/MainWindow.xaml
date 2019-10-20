@@ -51,7 +51,7 @@
                 <Border Grid.Column="0" Grid.Row="1" Height="30" Width="300">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Width="300">
                         <TextBox Name="TXTBoxMessageSend" VerticalAlignment="Center" HorizontalAlignment="Left" Height="30"  Width="250" Padding="5"/>
-                        <Button Name="BTNSend" Click="Button_Click_Send" Content="Send" Height="30" Width="50" Padding="5"></Button>
+                        <Button Name="BTNSend" Click="OnConnectToDevice"  Content="Send" Height="30" Width="50" Padding="5"></Button>
                     </StackPanel>
                 </Border>
             </Grid>

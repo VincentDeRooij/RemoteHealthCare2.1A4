@@ -22,12 +22,12 @@ namespace RemoteHealthCare.Devices
         private int averageRPMCounted;
         private int averageRPM;
         private int AverageRPM => averageRPM;
-        public int currentSpeed;
-        public int CurrentSpeed => currentSpeed;
+        public double currentSpeed;
+        public double CurrentSpeed => currentSpeed;
 
         private int averageSpeedCounted;
-        public int averageSpeed;
-        public int AverageSpeed => averageSpeed;
+        public double averageSpeed;
+        public double AverageSpeed => averageSpeed;
 
         public int CurrentRPM => lastBikeData.RPM;
 
@@ -68,7 +68,9 @@ namespace RemoteHealthCare.Devices
             OnDeviceDataChanged();
         }
 
+#if !SIM
         ~StationaryBike() => bluetoothLinkedDevice.CloseDevice();
+#endif
 
         private async Task SetupDevice(string deviceName)
         {
@@ -96,9 +98,8 @@ namespace RemoteHealthCare.Devices
                         float dif = (generalData.Distance - lastGeneralData.Distance) / 1000.0f;
                         distanceTraveled += dif < 0 ? dif * -1 : dif;
                     }
-                    int currentSpeed = (generalData.PageData[5] << 4) | generalData.PageData[4];
+                    double currentSpeed = ((double)((lastGeneralData.PageData[5] << 8) | lastGeneralData.PageData[4])) / 1000;
                     this.currentSpeed = currentSpeed;
-                    Console.WriteLine(currentSpeed);
                     averageSpeed = ((averageSpeed * averageSpeedCounted) + currentSpeed) / ++averageSpeedCounted;
                     lastGeneralData = generalData;
                 }
@@ -106,7 +107,7 @@ namespace RemoteHealthCare.Devices
                 {
                     lastGeneralData = dataModel.DataPage as GeneralFEData;
                     averageSpeedCounted++;
-                    currentSpeed = (lastGeneralData.PageData[5] << 4) | lastGeneralData.PageData[4];
+                    currentSpeed = ((double)((lastGeneralData.PageData[5] << 8) | lastGeneralData.PageData[4])) / 1000;
                     averageSpeed = currentSpeed;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData != null)

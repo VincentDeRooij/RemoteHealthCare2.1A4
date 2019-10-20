@@ -22,7 +22,7 @@ namespace RemoteHealthCare
         public InlogWindow()
         {
             InitializeComponent();
-            //App.serverClientWrapper.OnReceived += OnMessageReceived;
+            App.serverClientWrapper.OnReceived += OnMessageReceived;
         }
 
         private void OnMessageReceived(RHCCore.Networking.IConnection connection, dynamic args)
@@ -32,7 +32,7 @@ namespace RemoteHealthCare
             {
                 Dispatcher.Invoke(() =>
                 {
-                    MainWindow main = new MainWindow((string)args.Data.Key,"username");
+                    MainWindow main = new MainWindow((string)args.Data.Key, "username");
                     main.Show();
                     this.Close(); 
                 });
@@ -46,20 +46,20 @@ namespace RemoteHealthCare
 
         private void LogInClick(object sender, RoutedEventArgs e)
         {
-            string username = bsnInput.Text;
-            MainWindow main = new MainWindow("henk", "username");
-            main.Show();
-            this.Close();
+            //string username = bsnInput.Text;
+            //MainWindow main = new MainWindow("henk", "username");
+            //main.Show();
+            //this.Close();
 
-            //App.serverClientWrapper.NetworkConnection.Write(new
-            //{
-            //    Command = "login/try",
-            //    Data = new
-            //    {
-            //        Username = RHCCore.Security.Hashing.EncryptSHA256(bsnInput.Text),
-            //        Password = RHCCore.Security.Hashing.EncryptSHA256(passwordInput.Password)
-            //    }
-            //});
+            App.serverClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "login/try",
+                Data = new
+                {
+                    Username = RHCCore.Security.Hashing.EncryptSHA256(bsnInput.Text),
+                    Password = RHCCore.Security.Hashing.EncryptSHA256(passwordInput.Password)
+                }
+            });
         }
     }
 }

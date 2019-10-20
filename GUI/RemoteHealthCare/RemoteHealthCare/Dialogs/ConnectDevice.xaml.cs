@@ -48,6 +48,9 @@ namespace RemoteHealthCare.Dialogs
 #endif
             for (int i = 0; i < foundDevices.Count; i++)
             {
+                if (!foundDevices[i].Contains("Decathlon") && !foundDevices[i].Contains("Tacx"))
+                    continue;
+
                 string deviceName = foundDevices[i];
                 if (!foundConnections.Contains(deviceName))
                 {
