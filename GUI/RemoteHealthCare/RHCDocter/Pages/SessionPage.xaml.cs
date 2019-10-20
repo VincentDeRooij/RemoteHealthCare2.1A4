@@ -27,9 +27,11 @@ namespace RHCDocter.Pages
         private Thread threadPB;
         private Person person;
         private Session session;
+        private string key;
 
-        public SessionPage(ref Person person_, ref Session session_)
+        public SessionPage(ref Person person_, ref Session session_, string key)
         {
+            this.key = key;
             InitializeComponent();
             person = person_;
             session = session_;
@@ -57,6 +59,13 @@ namespace RHCDocter.Pages
 
             double value = slider.Value;
             Console.Out.WriteLine($"Slider Value: {value}");
+            App.TcpClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "resistance/send",
+                data = value,
+                Key = key
+
+            });
             //Set Window Title.
             //this.Title = "Value: " + value.ToString("0.0") + "/" + slider.Maximum;
         }

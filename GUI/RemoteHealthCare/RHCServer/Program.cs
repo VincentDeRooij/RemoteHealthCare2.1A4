@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RHCCore.Networking;
 using RHCCore.Networking.Models;
 using RHCFileIO;
@@ -56,8 +57,9 @@ namespace RHCServer
             {
                 case "session/create":
                     {
-                        string authkey = args.Data.Key;
-                        Session session = args.Data.Session;
+                        string authkey = (string)args.Data.Key;
+                        Session session = (args.Data.Session as JObject).ToObject<Session>();
+                        
 
                         activeSessions.Add(session);
                         IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
@@ -219,6 +221,19 @@ namespace RHCServer
                                 patient = json
                             }
                         });
+                    }
+                    break;
+
+                case "chat/send":
+                    {
+                        string key = (string)args.Key;
+                        authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault() ? .Item1.Write(args);
+                    }
+                    break;
+                case "resistance/send":
+                    {
+                        string key = (string)args.Key;
+                        authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault()?.Item1.Write(args);
                     }
                     break;
             }

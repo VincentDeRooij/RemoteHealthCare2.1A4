@@ -31,10 +31,14 @@
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Width="750">
                     <Label VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="40" Width="150">Resistance</Label>
-                    <Slider Name="SliderResistance" HorizontalAlignment="Stretch" Height="20" Width="750"
+                    <Slider Name="SliderResistance" HorizontalAlignment="Stretch" Height="20" Width="auto"
                             Margin="10, 5"
                             VerticalAlignment="Top"
-                            ValueChanged="Slider_ValueChanged">
+                            ValueChanged="Slider_ValueChanged"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"  
+                            Minimum="0"
+                            Maximum="7">
                     </Slider>
                 </StackPanel>
             </StackPanel>

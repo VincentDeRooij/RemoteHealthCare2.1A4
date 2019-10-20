@@ -3,6 +3,7 @@
 using Avans.TI.BLE;
 using LiveCharts;
 using LiveCharts.Wpf;
+using Newtonsoft.Json.Linq;
 using RemoteHealthCare.Devices;
 using RHCCore.Networking.Models;
 using System;
@@ -38,7 +39,7 @@ namespace RemoteHealthCare
         string authkey;
         public float lastDistance;
         public static StationaryBike bike;
-        public static  int counter = 0;
+        public static int counter = 0;
         public static float totalspeed = 0;
         public static Stopwatch stopwatch = new Stopwatch();
         Session activeSession;
@@ -47,7 +48,7 @@ namespace RemoteHealthCare
         public MainWindow(string authkey, string username)
         {
             InitializeComponent();
-            DataContext = this; 
+            DataContext = this;
             this.authkey = authkey;
 
             App.serverClientWrapper.OnReceived += OnReceived;
@@ -62,31 +63,48 @@ namespace RemoteHealthCare
             switch (command)
             {
                 case "session/start":
-                {
-                    Session newSession = args.Data.Session;
-                    if (activeSession == null)
                     {
-                        activeSession = newSession;
-                        new Thread(() =>
+                        Session newSession = (args.Data.Session as JObject).ToObject<Session>();
+                        if (activeSession == null)
                         {
-                            double startTime = newSession.StartDate.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
-                            double currentTime = startTime;
-                            while (currentTime - startTime < newSession.SessionDuration)
+                            activeSession = newSession;
+                            new Thread(() =>
                             {
-                                Thread.Sleep(10);
-                                currentTime = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
-                            }
+                                double startTime = newSession.StartDate.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                                double currentTime = startTime;
+                                while (currentTime - startTime < newSession.SessionDuration)
+                                {
+                                    Thread.Sleep(10);
+                                    currentTime = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                                }
 
-                            connection.Write(new
-                            {
-                                Command = "session/done",
-                            });
+                                connection.Write(new
+                                {
+                                    Command = "session/done",
+                                });
 
-                            activeSession = null;
-                        }).Start();
+                                activeSession = null;
+                            }).Start();
+                        }
                     }
-                }
-                break;
+                    break;
+                case "chat/send":
+                    {
+                        string message = (string)args.data;
+                        if (Panel.chatList != null)
+                        {
+                            Panel.addText(message);
+                            Panel.drawValues();
+                        }
+                    }
+                    break;
+                case "resistance/send":
+                    {
+                        int value = (int)args.data;
+                        Panel.resistance = value;
+                        Panel.drawValues();
+                    }
+                    break;
             }
         }
 
@@ -98,7 +116,7 @@ namespace RemoteHealthCare
 #if SIM
                 IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
 #else
-                IDevice selectedDevice = ((string)x).Contains("Tacx") || ((string)x).Contains("Decathlon") ? new Devices.StationaryBike((string)x,"") : null;
+                IDevice selectedDevice = ((string)x).Contains("Tacx") || ((string)x).Contains("Decathlon") ? new Devices.StationaryBike((string)x, "") : null;
 #endif
                 Console.WriteLine(selectedDevice);
                 selectedDevice.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
@@ -120,7 +138,7 @@ namespace RemoteHealthCare
             //    float distanceDifference = bike.Distance - lastDistance;
             //    currentSpeed = (distanceDifference / 0.02f);
             //    speedList.Add(currentSpeed);
-                
+
             //    if (speedList.Count == 10) {
             //        float totalspeed = 0;
             //        foreach (float value in speedList) {
@@ -192,13 +210,14 @@ namespace RemoteHealthCare
             Thread.Sleep(5);
             counter++;
 
-            bike.currentSpeedData = bike.CurrentSpeed / 22;
+            bike.currentSpeedData = bike.CurrentSpeed;
             bike.averageSpeedData = bike.AverageSpeed / 22;
             bike.distanceData = bike.Distance * 1000;
 
             if (counter % 10 == 0)
             {
-                Console.WriteLine($"De current speed={bike.currentSpeedData}\nAverage Speed:{bike.averageSpeedData}\nDistance: {bike.distanceData}");
+                Console.WriteLine($"De current speed={bike.currentSpeedData}\nAverage Speed:{bike.averageSpeedData}");
+                EngineInteraction.updateFollowRouteSpeed(bike.CurrentSpeed);
             }
 
             //Console.WriteLine($"Distance: {bike.Distance}\nSpeed: {bike.CurrentSpeed}");
