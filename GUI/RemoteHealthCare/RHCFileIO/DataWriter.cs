@@ -75,6 +75,12 @@ namespace RHCFileIO
 
         private string CreateNewFile(string filePath, string fileName)
         {
+            if (!File.Exists(Path.Combine(filePath, fileName)))
+            {
+                using (File.Create(Path.Combine(filePath, fileName)))
+                {
+                }
+            }
             return Path.Combine(filePath, fileName);
         }
 
@@ -90,7 +96,7 @@ namespace RHCFileIO
         }
 
         public void WritePatientIDs(string patient) 
-        { 
+        {
             if (File.Exists(Path.Combine(this.patientListingPath.FullName, patientListingFile)))
             {
                 this.appendBoolean = true;
@@ -99,10 +105,21 @@ namespace RHCFileIO
             {
                 this.appendBoolean = false;
             }
-            this.streamWriter = new StreamWriter(Path.Combine(this.historyPath.FullName, patientListingFile), appendBoolean);
-            streamWriter.Write(patient + "_");
-            streamWriter.Flush();
-            streamWriter.Close();
+            try
+            {
+                List<string> patientInside = ReadPatients();
+                if (!patientInside.Contains(patient))
+                {
+                    this.streamWriter = new StreamWriter(Path.Combine(this.historyPath.FullName, patientListingFile), appendBoolean);
+                    streamWriter.Write(patient + "_");
+                    streamWriter.Flush();
+                    streamWriter.Close();
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                
+            }
         }
         
         public List<string> ReadPatients() 
