@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RHCCore.Networking;
 using RHCCore.Networking.Models;
-using RHCFileIO;
 
 namespace RHCServer
 {
@@ -16,21 +15,15 @@ namespace RHCServer
     {
         private static TcpServerWrapper server;
         private static List<Tuple<IConnection, string, string>> authkeys;
-        private static List<Session> activeSessions = new List<Session>();
-
-        private static PatientOverview PatientOverview;
-        private static DataWriter dataWriter;
-        private static LogWriter logWriter;
+        private static List<IConnection> doctors;
 
         static async Task Main(string[] args)
         {
             authkeys = new List<Tuple<IConnection, string, string>>();
             server = new TcpServerWrapper(new IPEndPoint(IPAddress.Any, 20000));
-            GatherFromFile(); // gathers the history of the server
-            SavePatientDataToFile(); // saves the data to file on a timer of 60sec
+            doctors = new List<IConnection>();
             await server.StartAsync();
 
-            new UserList();
             server.OnClientConnected += OnNewClient;
             server.OnClientDataReceived += OnDataReceived;
             server.OnClientDisconnected += OnClientDisconnected;
@@ -48,6 +41,9 @@ namespace RHCServer
         {
             if (authkeys.Where(x => x.Item1 == client).Count() > 0)
                 authkeys.Remove(authkeys.Where(x => x.Item1 == client).First());
+
+            if (doctors.Contains(client))
+                doctors.Remove(client);
         }
 
         private static void OnDataReceived(IConnection client, dynamic args)
@@ -59,36 +55,92 @@ namespace RHCServer
                     {
                         string authkey = (string)args.Data.Key;
                         Session session = (args.Data.Session as JObject).ToObject<Session>();
-                        
-
-                        activeSessions.Add(session);
                         IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
-                        if (clientConnection != null)
+                        if (SessionStorage.Instance.CreateSession(session))
                         {
-                            clientConnection.Write(new
+                            var tuple = authkeys.Where(x => x.Item1 == clientConnection).FirstOrDefault();
+                            if (tuple != null)
                             {
-                                Command = "session/start",
-                                Data = new
+                                Person person = AccountStorage.Instance.GetPerson(tuple.Item3);
+                                person.Sessions.Add(session.SessionId);
+                                AccountStorage.Instance.SyncToFile();
+                            }
+
+                            if (clientConnection != null)
+                            {
+                                clientConnection.Write(new
                                 {
-                                    Session = session
-                                }
-                            });
+                                    Command = "session/create",
+                                    Data = new
+                                    {
+                                        Session = session
+                                    }
+                                });
+                            }
                         }
+                    }
+                break;
+
+                case "session/update":
+                    {
+                        Session session = SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId);
+                        session.BikeData.Add(args.Data.BikeData);
+                        SessionStorage.Instance.SyncSession(session);
+
+                        doctors.ForEach(x => x.Write(new
+                        {
+                            Command = $"session/{session.SessionId}/updated",
+                            Data = args.Data
+                        }));
+                    }
+                break;
+
+                case "session/start":
+                    {
+                        string authkey = (string)args.Data.Key;
+                        IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
+                        clientConnection.Write(new
+                        {
+                            Command = "session/start",
+                        });
                     }
                     break;
 
+                case "session/ready":
+                    {
+                        Session session = SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId);
+                        doctors.ForEach(x => x.Write(new
+                        {
+                            Command = $"session/{session.SessionId}/ready",
+                            Data = args.Data
+                        }));
+                    }
+                break;
+
+                case "session/done":
+                    {
+                        Session session = SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId);
+                        session.IsArchived = true;
+                        SessionStorage.Instance.SyncSession(session);
+
+                        doctors.ForEach(x => x.Write(new
+                        {
+                            Command = $"session/{session.SessionId}/done",
+                            Data = args.Data
+                        }));
+                    }
+                break;
+
                 case "login/try":
                     {
-                        //logWriter.WriteLogText("Server received loggin request");
                         string username = (string)args.Data.Username;
                         string password = (string)args.Data.Password;
 
-                        if (UserList.UserExists(username, password))
+                        if (AccountStorage.Instance.UserExists(username, password))
                         {
-                            Person user = UserList.GetUser(username);
+                            Person user = AccountStorage.Instance.GetPerson(username);
                             string authKey = Guid.NewGuid().ToString();
                             authkeys.Add(new Tuple<IConnection, string, string>(client, authKey.ToString(), user.Username));
-                            //logWriter.WriteLogText($"Server accepted login, added client, {user.Username}, with {authKey}");
                             client.Write(new
                             {
                                 Command = "login/authenticated",
@@ -100,60 +152,24 @@ namespace RHCServer
                         }
                         else
                         {
-                            //logWriter.WriteLogText("Server refused login connection, username and password incorrect");
                             client.Write(new
                             {
                                 Command = "login/refused",
                             });
                         }
                     }
-                    break;
-
-                case "user/push/heartrate":
-                    {
-
-                        dynamic data = args.data;
-
-                        foreach (PatientData patientData in PatientOverview.PatientDataBase)
-                        {
-                            if (patientData.Equals(args.ID))
-                            {
-                                SaveDataHeartData(args.ID, data.current_hr);
-                            }
-                        }
-
-                        break;
-                    }
-
-                case "user/push/bike":
-                    {
-                        //logWriter.WriteLogText("Server got heart data");
-                        dynamic data = args.data;
-
-                        foreach (PatientData patientData in PatientOverview.PatientDataBase)
-                        {
-                            if (patientData.Equals(args.ID))
-                            {
-                                SaveDataBikeData(args.ID, (string)data.bike_name, (int)data.average_speed, (int)data.current_speed, (float)data.distance);
-                            }
-                        }
-
-                        break;
-                    }
+                break;
 
                 case "client/add":
                     {
-                        //logWriter.WriteLogText($"Server added client, {args.Data.Name}");
-                        UserList.AddUser(args.Data.Name, args.Data.Username, args.Data.Password);
+                        AccountStorage.Instance.AddPerson(new Person(args.Data.Name, args.Data.Username, args.Data.Password));
                     }
-                    break;
+                break;
 
                 case "clients/get":
                     {
-                        //logWriter.WriteLogText($"Server got client request");
-
                         List<dynamic> personsList = new List<dynamic>();
-                        foreach (Person iperson in UserList.GetPersons())
+                        foreach (Person iperson in AccountStorage.Instance.AccountList)
                         {
                             bool online = authkeys.Where(x => x.Item3 == iperson.Username).Count() > 0;
                             personsList.Add(new
@@ -174,133 +190,43 @@ namespace RHCServer
 
                 case "doctor/login":
                     {
-                        //logWriter.WriteLogText($"Server got dokter login request");
-                        if (UserList.UserExists((string)args.Data.Username, (string)args.Data.Password, true))
+                        if (AccountStorage.Instance.UserExists((string)args.Data.Username, (string)args.Data.Password, true))
                         {
-                            //logWriter.WriteLogText($"Server accepted dokter login request from {args.Data.Username}");
                             client.Write(new
                             {
                                 Command = "login/accepted"
                             });
+
+                            doctors.Add(client);
                         }
                         else
                         {
-                            //logWriter.WriteLogText($"Server refused connection from {args.Data.Username}");
                             client.Write(new
                             {
                                 Command = "login/refused"
                             });
                         }
                     }
-                    break;
-
-                // Gets the requested patient info from the PatientOverview object
-                // In-order to function the data which is received must be in order of Data.Patient
-
-                // so the send request on the dokter app will look like this.
-
-                //    {
-                //      Command = "dokter/history/request",
-                //          Data = new
-                //          {
-                //              Patient = {the given patientID/username}
-                //          }
-                //    });
-
-                case "dokter/history/request":
-                    {
-                        logWriter.WriteLogText($"dokter request received for history data {args.Data.Patient}");
-                        PatientData data = dataWriter.GetPatientData(args.Data.Patient);
-                        dynamic json = JsonConvert.SerializeObject(data);
-
-                        client.Write(new
-                        {
-                            Command = "history/patient",
-                            Data = new
-                            {
-                                patient = json
-                            }
-                        });
-                    }
-                    break;
+                break;
 
                 case "chat/send":
                     {
                         string key = (string)args.Key;
                         authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault() ? .Item1.Write(args);
                     }
-                    break;
+                break;
+
                 case "resistance/send":
                     {
                         string key = (string)args.Key;
                         authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault()?.Item1.Write(args);
                     }
-                    break;
+                break;
             }
         }
-
-        public static void SaveDataBikeData(string patientID, string bikeName, int avgSpeed, int curSpeed, float distance)
-        {
-
-            foreach (PatientData patient in PatientOverview.PatientDataBase)
-            {
-                if (patient.patientID.Equals(patientID))
-                {
-                    BikeData bikeData;
-                    if (patient.bikeData == null)
-                    {
-                        bikeData = new BikeData(bikeName);
-                    }
-                    bikeData = patient.bikeData;
-                    bikeData.averageSpeed.Add(avgSpeed);
-                    bikeData.currentSpeed.Add(curSpeed);
-                    bikeData.distanceTraversed.Add(distance);
-                    //logWriter.WriteLogText($"Bike data {bikeName} saved, {patientID}");
-                }
-            }
-        }
-
-        public static void SaveDataHeartData(string patientID, int hrRate)
-        {
-            foreach (PatientData patient in PatientOverview.PatientDataBase)
-            {
-                if (patient.patientID.Equals(patientID))
-                {
-                    HeartData heartData;
-                    if (patient.bikeData == null)
-                    {
-                        heartData = new HeartData();
-                    }
-                    heartData = patient.heartData;
-                    heartData.currentHRTRate.Add(hrRate);
-                    heartData.averageHRTRate.Add(heartData.CalcTotalAverageHR());
-                    //logWriter.WriteLogText($"Heartrate data saved, {patientID}");
-                }
-            }
-        }
-
-        private static void GatherFromFile() 
-        {
-            List<string> currentPatients = dataWriter.ReadPatients();
-            PatientOverview = dataWriter.ReadAllData(currentPatients);
-        }
-
-        private static void SavePatientDataToFile() 
-        {
-            Thread fileSavingThread = new Thread(() =>
-            {
-                while (true)
-                {
-                    dataWriter.WriteAllPatientsData();
-                    Thread.Sleep(60000);
-                }
-            });
-            
-        }
-
+ 
         private static void OnNewClient(IConnection client, dynamic args)
         {
-            //logWriter.WriteLogText($"Server got new client connection request from {client.RemoteEndPoint.Address}");
             Console.WriteLine($"CLIENT {client.RemoteEndPoint.Address} CONNECTED");
         }
     }

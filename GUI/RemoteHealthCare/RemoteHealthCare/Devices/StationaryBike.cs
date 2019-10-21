@@ -32,7 +32,7 @@ namespace RemoteHealthCare.Devices
         public int CurrentRPM => lastBikeData.RPM;
 
         private float distanceTraveled;
-        public float Distance { get; set; }
+        public float Distance => distanceTraveled;
 
         public string deviceName;
 

@@ -37,13 +37,39 @@ namespace RHCDocter.Pages
             session = session_;
             ProgressBar.Maximum = session.SessionDuration;
             SliderResistance.IsEnabled = !session.IsArchived;
+            BTNStart.IsEnabled = false;
             threadPB = new Thread(HandleProgressBarThread);
+
+            App.TcpClientWrapper.OnReceived += OnReceived;
+        }
+
+        private void OnReceived(RHCCore.Networking.IConnection connection, dynamic args)
+        {
+            string command = (string)args.Command;
+            if (command == $"session/{session.SessionId}/ready")
+            {
+                Dispatcher.Invoke(() => BTNStart.IsEnabled = true);
+            }
+
+            if (command == $"session/{session.SessionId}/updated")
+            {
+                Console.WriteLine(args);
+            }
         }
 
         private void Button_Click_Start(object sender, RoutedEventArgs e)
         {
             threadPB.Start();
             BTNStart.IsEnabled = false;
+            App.TcpClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "session/start",
+                Data = new
+                {
+                    SessionId = session.SessionId,
+                    Key = key
+                }
+            });
         }
 
         private void Button_Click_Stop(object sender, RoutedEventArgs e)
@@ -51,6 +77,14 @@ namespace RHCDocter.Pages
             threadPB.Abort();
             BTNStart.IsEnabled = false;
             BTNStop.IsEnabled = false;
+            App.TcpClientWrapper.NetworkConnection.Write(new
+            {
+                Command = "session/stop",
+                Data = new
+                {
+                    SessionId = session.SessionId
+                }
+            });
         }
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -66,11 +100,8 @@ namespace RHCDocter.Pages
                 Key = key
 
             });
-            //Set Window Title.
-            //this.Title = "Value: " + value.ToString("0.0") + "/" + slider.Maximum;
         }
 
-        //Double values 0.0-10 
         private void setSlider_Value(double value)
         {
             SliderResistance.Value = value;
@@ -84,13 +115,10 @@ namespace RHCDocter.Pages
             for (int i = 0; i < session.SessionDuration; i++)
             {
                 Dispatcher.Invoke(() => { ProgressBar.Value++; });
-                //Dispatcher.Invoke(new Action(() => { ProgressBar.Value++; }));
                 Thread.Sleep(1000);
             }
             
             Dispatcher.Invoke(() => { BTNStop.IsEnabled = false; });
-            //TODO: When Session is done: 
-            //
         }
     }
 }

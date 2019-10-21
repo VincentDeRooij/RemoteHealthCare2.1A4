@@ -37,13 +37,13 @@ namespace RemoteHealthCare
     {
         List<IDevice> devices = new List<IDevice>();
         string authkey;
-        public float lastDistance;
-        public static StationaryBike bike;
-        public static int counter = 0;
-        public static float totalspeed = 0;
-        public static Stopwatch stopwatch = new Stopwatch();
+        public StationaryBike bike;
+        public HeartRateMonitor hrMonitor;
+        int secondsRemaining = 0;
+
         Session activeSession;
         bool sessionActive => activeSession != null;
+        bool sessionRunning = false;
 
         public MainWindow(string authkey, string username)
         {
@@ -52,9 +52,6 @@ namespace RemoteHealthCare
             this.authkey = authkey;
 
             App.serverClientWrapper.OnReceived += OnReceived;
-
-            //bike = new StationaryBike(username, username);
-            //BikeConnection();
         }
 
         private void OnReceived(RHCCore.Networking.IConnection connection, dynamic args)
@@ -62,32 +59,69 @@ namespace RemoteHealthCare
             string command = args.Command;
             switch (command)
             {
-                case "session/start":
+                case "session/create":
                     {
                         Session newSession = (args.Data.Session as JObject).ToObject<Session>();
                         if (activeSession == null)
                         {
                             activeSession = newSession;
+                            connection.Write(new
+                            {
+                                Command = $"session/ready",
+                                Data = new
+                                {
+                                    SessionId = newSession.SessionId
+                                }
+                            });
+                        }
+                    }
+                break;
+
+                case "session/start":
+                    {
+                        if (activeSession != null)
+                        {
                             new Thread(() =>
                             {
-                                double startTime = newSession.StartDate.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                                sessionRunning = true;
+                                
+                                double startTime = activeSession.StartDate.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
                                 double currentTime = startTime;
-                                while (currentTime - startTime < newSession.SessionDuration)
+
+                                lastUpdate = 0;
+
+                                secondsRemaining = activeSession.SessionDuration;
+                                while (secondsRemaining > 0)
                                 {
-                                    Thread.Sleep(10);
-                                    currentTime = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                                    currentTime = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                                    if (currentTime - startTime >= 1000)
+                                    {
+                                        secondsRemaining--;
+                                        startTime = currentTime;
+                                    }
                                 }
 
                                 connection.Write(new
                                 {
                                     Command = "session/done",
+                                    Data = new
+                                    {
+                                        SessionId = activeSession.SessionId,
+                                    }
                                 });
 
                                 activeSession = null;
                             }).Start();
                         }
                     }
-                    break;
+                break;
+
+                case "session/pause":
+                    {
+                        sessionRunning = false;
+                    }
+                break;
+
                 case "chat/send":
                     {
                         string message = (string)args.data;
@@ -97,14 +131,15 @@ namespace RemoteHealthCare
                             Panel.drawValues();
                         }
                     }
-                    break;
+                break;
+
                 case "resistance/send":
                     {
                         int value = (int)args.data;
                         Panel.resistance = value;
                         Panel.drawValues();
                     }
-                    break;
+                break;
             }
         }
 
@@ -115,6 +150,8 @@ namespace RemoteHealthCare
             {
 #if SIM
                 IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
+                bike = selectedDevice as StationaryBike;
+                hrMonitor = new HeartRateMonitor();
 #else
                 IDevice selectedDevice = ((string)x).Contains("Tacx") || ((string)x).Contains("Decathlon") ? new Devices.StationaryBike((string)x, "") : null;
 #endif
@@ -130,97 +167,40 @@ namespace RemoteHealthCare
             wndConnect.ShowDialog();
         }
 
+        double lastUpdate = 0;
+        double currentDelta = 0;
         private void SelectedDevice_DeviceDataChanged(object sender, EventArgs e)
         {
-            //bike = (StationaryBike)sender;
-            //if (bike.Distance != lastDistance)
-            //{
-            //    float distanceDifference = bike.Distance - lastDistance;
-            //    currentSpeed = (distanceDifference / 0.02f);
-            //    speedList.Add(currentSpeed);
-
-            //    if (speedList.Count == 10) {
-            //        float totalspeed = 0;
-            //        foreach (float value in speedList) {
-            //            totalspeed += value;
-            //        }
-            //        speedList.Clear();
-            //        //Console.WriteLine($"Distance: {bike.Distance}\n Speed: {totalspeed/10}");
-            //    }
-            //}
-            //lastDistance = bike.Distance;
-            //Console.WriteLine($"Distance: {bike.Distance}");
-
-        }
-
-        static async void BikeConnection()
-        {
-            int errorCode = 0;
-            BLE bleBike = new BLE();
-            BLE bleHeart = new BLE();
-            Thread.Sleep(1000); // We need some time to list available devices
-
-            // List available devices
-            List<String> bleBikeList = bleBike.ListDevices();
-            Console.WriteLine("Devices found: ");
-            foreach (var name in bleBikeList)
+            if (sessionActive && sessionRunning)
             {
-                Console.WriteLine($"Device: {name}");
+                if (lastUpdate == 0)
+                {
+                    lastUpdate = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                }
+
+                currentDelta = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                if (currentDelta - lastUpdate >= 125)
+                {
+                    hrMonitor.HeartRate = 100;
+                    App.serverClientWrapper.NetworkConnection.Write(new
+                    {
+                        Command = "session/update",
+                        Data = new
+                        {
+                            SecondsPassed = activeSession.SessionDuration - secondsRemaining + 1,
+                            SessionId = activeSession.SessionId,
+                            BikeData = new
+                            {
+                                Distance = bike.Distance,
+                                RPM = bike.CurrentRPM,
+                                Speed = bike.CurrentSpeed,
+                                AvgSpeed = bike.AverageSpeed,
+                            }
+                        }
+                    });
+                    lastUpdate = currentDelta;
+                }
             }
-
-            // Connecting
-            errorCode = errorCode = await bleBike.OpenDevice("Tacx Flux 24517");
-            // __TODO__ Error check
-
-            var services = bleBike.GetServices;
-            foreach (var service in services)
-            {
-                Console.WriteLine($"Service: {service}");
-            }
-
-            // Set service
-            errorCode = await bleBike.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
-            // __TODO__ error check
-
-            stopwatch.Start();
-
-            // Subscribe
-            bleBike.SubscriptionValueChanged += BleBike_SubscriptionValueChanged;
-            errorCode = await bleBike.SubscribeToCharacteristic("6e40fec2-b5a3-f393-e0a9-e50e24dcca9e");
-
-            // Heart rate
-            errorCode = await bleHeart.OpenDevice("Decathlon Dual HR");
-
-            await bleHeart.SetService("HeartRate");
-
-            bleHeart.SubscriptionValueChanged += BleBike_SubscriptionValueChanged;
-            await bleHeart.SubscribeToCharacteristic("HeartRateMeasurement");
-
-
-            Console.Read();
-        }
-
-        private static void BleBike_SubscriptionValueChanged(object sender, BLESubscriptionValueChangedEventArgs e)
-        {
-            //Console.WriteLine("Received from {0}: {1}, {2}", e.ServiceName,
-            //    BitConverter.ToString(e.Data).Replace("-", " "),
-            //    Encoding.UTF8.GetString(e.Data));
-            bike.PushDataChange(e.Data);
-
-            Thread.Sleep(5);
-            counter++;
-
-            bike.currentSpeedData = bike.CurrentSpeed;
-            bike.averageSpeedData = bike.AverageSpeed / 22;
-            bike.distanceData = bike.Distance * 1000;
-
-            if (counter % 10 == 0)
-            {
-                Console.WriteLine($"De current speed={bike.currentSpeedData}\nAverage Speed:{bike.averageSpeedData}");
-                EngineInteraction.updateFollowRouteSpeed(bike.CurrentSpeed);
-            }
-
-            //Console.WriteLine($"Distance: {bike.Distance}\nSpeed: {bike.CurrentSpeed}");
         }
     }
 }

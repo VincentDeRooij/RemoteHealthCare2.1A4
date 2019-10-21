@@ -115,7 +115,7 @@ namespace RemoteHealthCare
                     chooseAction(input);
                 }
             });
-            vrThread.Start();
+            //vrThread.Start();
         }
 
         static void ListenThread(NetworkStream stream)
@@ -348,7 +348,7 @@ namespace RemoteHealthCare
                         Console.WriteLine("Insert speed");
                         double speed = double.Parse(Console.ReadLine());
                         Uuids.TryGetValue(objectName, out objectUUID);
-                        json = encapsulatePacket(EngineInteraction.updateFollowRouteSpeed(objectUUID, speed));
+                        //json = encapsulatePacket(EngineInteraction.updateFollowRouteSpeed(objectUUID, speed));
                         Console.WriteLine(json);
                         break;
                     }

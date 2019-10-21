@@ -10,7 +10,7 @@ namespace RHCCore.Networking.Models
         public string Username { get; set; }
         public string Password { get; set; }
         public bool IsDoctor { get; set; }
-        public List<Session> Sessions { get; set; }
+        public List<string> Sessions { get; set; }
         public List<ChatMessage> Messages { get; set; }
 
         public Person(string Name, string Username, string Password, bool IsDoctor = false)
@@ -19,13 +19,7 @@ namespace RHCCore.Networking.Models
             this.Username = Username;
             this.Password = Password;
             this.IsDoctor = IsDoctor;
-            Sessions = new List<Session>();
-            Messages = new List<ChatMessage>();
-        }
-
-        public Person()
-        {
-            Sessions = new List<Session>();
+            Sessions = new List<string>();
             Messages = new List<ChatMessage>();
         }
     }
@@ -45,7 +39,6 @@ namespace RHCCore.Networking.Models
     public class Session
     {
         public List<dynamic> BikeData { get; set; }
-        public List<dynamic> HeartData { get; set; }
         public DateTime StartDate { get; set; }
         public int SessionDuration { get; set; }
         public string SessionId { get; set; }
@@ -55,10 +48,10 @@ namespace RHCCore.Networking.Models
         public Session(string name, DateTime startDate, int duration)
         {
             BikeData = new List<dynamic>();
-            HeartData = new List<dynamic>();
             this.StartDate = startDate;
             this.SessionDuration = duration;
             IsArchived = false;
+            this.SessionId = Guid.NewGuid().ToString();
             this.Name = name;
         }
     }

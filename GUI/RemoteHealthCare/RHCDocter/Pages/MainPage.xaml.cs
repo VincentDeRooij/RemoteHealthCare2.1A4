@@ -27,14 +27,14 @@ namespace RHCDocter.Pages
     public partial class MainPage : Page
     {
         private List<Person> listPersons;
-        public List<SessionWindow> activeSessionWindows { get; }
+        public List<SessionManager> activeSessionWindows { get; }
         public List<PersonProxy> persons { get; set; }
 
         public MainPage()
         {
             InitializeComponent();
             InitSettings();
-            activeSessionWindows = new List<SessionWindow>();
+            activeSessionWindows = new List<SessionManager>();
             listPersons = new List<Person>();
             persons = new List<PersonProxy>();
             App.TcpClientWrapper.OnReceived += OnReceived;
@@ -115,7 +115,7 @@ namespace RHCDocter.Pages
 
             if (ClientsListBox.SelectedIndex < 0)
             {
-                BTNCreate.IsEnabled = false;
+                BTNCreate.IsEnabled = true;
             }
 
             if (ArchivedSessionsListBox.SelectedIndex < 0)
@@ -152,65 +152,15 @@ namespace RHCDocter.Pages
             {
                 Person p = persons[ClientsListBox.SelectedIndex].Person;
                 Session session = new Session(TXTBoxNameSession.Text, DateTime.Now, int.Parse(TXTBoxTimeSession.Text));
-                SessionWindow sw = new SessionWindow(ref p, ref session, persons[ClientsListBox.SelectedIndex].Key);
-                activeSessionWindows.Add(sw); 
+                SessionManager sw = new SessionManager(persons[ClientsListBox.SelectedIndex], session);
                 sw.Show();
-
-                App.TcpClientWrapper.NetworkConnection.Write(new
-                {
-                    Command = "session/create",
-                    Data = new
-                    {
-                        Key = persons[ClientsListBox.SelectedIndex].Key,
-                        Session = session
-                    }
-                });
-
-                TXTBoxNameSession.Text = "";
-                TXTBoxTimeSession.Text = "";
-
-                BTNCreate.IsEnabled = false;
-
-                (new Thread(() =>
-                {
-                    bool isClosed = false;
-                    Dispatcher.Invoke(() => { isClosed = sw.IsClosed; });
-                    Console.Out.WriteLine("Started Session Window Closed ThreadListener");
-
-                    while (!isClosed)
-                    {
-                        Dispatcher.Invoke(() => { isClosed = sw.IsClosed; });
-
-
-                        Person selectedPerson = null;
-                        Dispatcher.Invoke(() => { selectedPerson = persons[ClientsListBox.SelectedIndex].Person; });
-
-                        foreach (SessionWindow s in activeSessionWindows)
-                        {
-                            if (selectedPerson.Equals(s.person))
-                            {
-                                Dispatcher.Invoke(() => { BTNCreate.IsEnabled = false; });
-                            }
-                            else
-                            {
-                                //Dispatcher.Invoke(() => { BTNCreate.IsEnabled = true; });
-                            }
-                        }
-                    }
-                    activeSessionWindows.Remove(sw);
-                    if (activeSessionWindows.Count == 0)
-                    {
-                        Dispatcher.Invoke(() => { BTNCreate.IsEnabled = true; });
-                    }
-
-                })).Start();
             }
         }
 
         private void Button_Click_Confirm(object sender, RoutedEventArgs e)
         {
             int index = ArchivedSessionsListBox.SelectedIndex;
-            Session archivedSession = listPersons[ClientsListBox.SelectedIndex].Sessions[index];
+            string archivedSession = listPersons[ClientsListBox.SelectedIndex].Sessions[index];
             Console.Out.WriteLine($"index: {index}");
 
             if (ClientsListBox.SelectedIndex < 0)
@@ -224,7 +174,8 @@ namespace RHCDocter.Pages
             else
             {
                 Person p = persons[ClientsListBox.SelectedIndex].Person;
-                SessionWindow sw = new SessionWindow(ref p, ref archivedSession, persons[ClientsListBox.SelectedIndex].Key);
+                Session s = new Session("t", DateTime.Now, 60);
+                SessionWindow sw = new SessionWindow(ref p, ref s, persons[ClientsListBox.SelectedIndex].Key);
                 sw.Show();
             }
         }
@@ -379,9 +330,9 @@ namespace RHCDocter.Pages
 
             resetArchivedSessionsView();
 
-            foreach (Session archivedSession in p.Sessions)
+            foreach (string archivedSession in p.Sessions)
             {
-                AddArchivedSessionToView($"{archivedSession.Name} - {archivedSession.StartDate}");
+                AddArchivedSessionToView($"{archivedSession} - {archivedSession}");
             }
 
             resetMessagesView();
