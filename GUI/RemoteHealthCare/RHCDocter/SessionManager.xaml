@@ -45,7 +45,7 @@
                 </lvc:AngularGauge.Sections>
             </lvc:AngularGauge>
 
-            <lvc:CartesianChart Series="{Binding SeriesCollection}" LegendLocation="Right" Grid.Column="1" >
+            <lvc:CartesianChart Series="{Binding SeriesCollection}" LegendLocation="Right" Grid.Column="1" ScrollMode="Y">
                 <lvc:CartesianChart.AxisY>
                     <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter}"></lvc:Axis>
                 </lvc:CartesianChart.AxisY>

@@ -26,7 +26,14 @@ namespace RHCDocter
     /// </summary>
     public partial class SessionManager : Window
     {
+        public delegate void SessionManagerEventHandler(SessionManager manager);
+        public event SessionManagerEventHandler OnSessionDone;
+
+        public bool IsAstrand => session.GetType() == typeof(AstrandSession);
+
         private string sessionId;
+        public string SessionId => sessionId;
+
         private PersonProxy client;
         private Session session;
 
@@ -53,7 +60,8 @@ namespace RHCDocter
                 Data = new
                 {
                     Session = session,
-                    Key = client.Key
+                    Key = client.Key,
+                    IsAstrand = session.GetType() == typeof(AstrandSession)
                 }
             });
 
@@ -72,16 +80,26 @@ namespace RHCDocter
                     Title = "RPM",
                     Values = new ChartValues<double> { },
                     PointGeometry = DefaultGeometries.Circle,
-                    PointGeometrySize = 8
+                    PointGeometrySize = 8,
+                    Foreground = new SolidColorBrush(Color.FromArgb(255, 10, 10, 255))
                 },
 
                 new LineSeries
                 {
-                    Title = "HR",
+                    Title = "Heartrate",
                     Values = new ChartValues<double> { },
                     PointGeometry = DefaultGeometries.Diamond,
                     PointGeometrySize = 8,
                     Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 10, 10))
+                },
+
+                new LineSeries
+                {
+                    Title = "Resistance",
+                    Values = new ChartValues<double> { },
+                    PointGeometry = DefaultGeometries.Triangle,
+                    PointGeometrySize = 8,
+                    Foreground = new SolidColorBrush(Color.FromArgb(255, 10, 255, 10))
                 },
             };
 
@@ -93,6 +111,8 @@ namespace RHCDocter
                 Interval = TimeSpan.FromSeconds(0.5),
             };
 
+            bool steadyState = false;
+            int steadyStateCounter = 0;
             updateTimer.Tick += async (x, y) =>
             {
                 Tuple<IConnection, dynamic> networkMessage;
@@ -118,8 +138,26 @@ namespace RHCDocter
                             Labels.Add(string.Format("{0:D2}:{1:D2}", minutesPassed, currentValue % 60));
                             int RPM = (int)networkMessage.Item2.Data.BikeData.RPM;
                             meterRpm.Value = RPM;
+                            int HR = (int)networkMessage.Item2.Data.BikeData.HR;
+
+                            if (this.SeriesCollection[0].Values.Count > 30)
+                            {
+                                this.SeriesCollection[0].Values.RemoveAt(0);
+                                this.SeriesCollection[1].Values.RemoveAt(0);
+                                this.SeriesCollection[2].Values.RemoveAt(0);
+                            }
+
                             this.SeriesCollection[0].Values.Add((double)RPM);
-                            this.SeriesCollection[1].Values.Add((double)networkMessage.Item2.Data.HR);
+                            this.SeriesCollection[1].Values.Add((double)HR);
+                            this.SeriesCollection[2].Values.Add((double)networkMessage.Item2.Data.BikeData.Resistance);
+
+                            if (HR <= 135 && HR >= 125)
+                                steadyStateCounter++;
+                            else
+                                steadyStateCounter = 0;
+
+                            if (steadyStateCounter >= 120)
+                                steadyState = true;
                         }
                     }
 
@@ -127,6 +165,21 @@ namespace RHCDocter
                     {
                         bttnStart.IsEnabled = false;
                         bttnStop.IsEnabled = false;
+
+                        if (session.GetType() == typeof(AstrandSession))
+                        {
+                            App.TcpClientWrapper.NetworkConnection.Write(new
+                            {
+                                Command = "doctor/session/done",
+                                Data = new
+                                {
+                                    SessionId = sessionId,
+                                    SteadyState = steadyState
+                                }
+                            });
+                        }
+
+                        OnSessionDone?.Invoke(this);
                     }
                 }
             };

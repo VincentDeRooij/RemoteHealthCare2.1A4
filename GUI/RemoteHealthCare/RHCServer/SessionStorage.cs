@@ -29,6 +29,14 @@ namespace RHCServer
             return JsonConvert.DeserializeObject<Session>(File.ReadAllText($"Sessions/{sessionId}.data"));
         }
 
+        public AstrandSession RetrieveAstrandSession(string sessionId)
+        {
+            if (!SessionExists(sessionId))
+                return null;
+
+            return JsonConvert.DeserializeObject<AstrandSession>(File.ReadAllText($"Sessions/{sessionId}.data"));
+        }
+
         public bool CreateSession(Session session)
         {
             try

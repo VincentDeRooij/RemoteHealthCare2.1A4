@@ -72,6 +72,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ArchivedWindow.xaml.cs">
+      <DependentUpon>ArchivedWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Models\PersonProxy.cs" />
     <Compile Include="Pages\SessionPage.xaml.cs">
       <DependentUpon>SessionPage.xaml</DependentUpon>
@@ -82,6 +85,10 @@
     <Compile Include="SessionWindow.xaml.cs">
       <DependentUpon>SessionWindow.xaml</DependentUpon>
     </Compile>
+    <Page Include="ArchivedWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

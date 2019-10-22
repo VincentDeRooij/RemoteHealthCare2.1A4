@@ -25,6 +25,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace RemoteHealthCare
 {
@@ -35,21 +36,33 @@ namespace RemoteHealthCare
 
     public partial class MainWindow
     {
+        enum ASTRAND_STAGE
+        {
+            WARMUP,
+            TESTING,
+            COOLDOWN
+        }
+
         List<IDevice> devices = new List<IDevice>();
         string authkey;
         public StationaryBike bike;
         public HeartRateMonitor hrMonitor;
         int secondsRemaining = 0;
 
+        ASTRAND_STAGE astrandStage;
+        bool isAstrand = false;
         Session activeSession;
         bool sessionActive => activeSession != null;
         bool sessionRunning = false;
+        int maximumHeartrate = 0;
 
         public MainWindow(string authkey, string username)
         {
             InitializeComponent();
             DataContext = this;
             this.authkey = authkey;
+
+            astrandStage = ASTRAND_STAGE.WARMUP;
 
             App.serverClientWrapper.OnReceived += OnReceived;
         }
@@ -61,6 +74,11 @@ namespace RemoteHealthCare
             {
                 case "session/create":
                     {
+                        isAstrand = (bool)args.Data.IsAstrand;
+
+                        if (isAstrand)
+                            maximumHeartrate = (args.Data.Session as JObject).ToObject<AstrandSession>().GetHeartrate();
+
                         Session newSession = (args.Data.Session as JObject).ToObject<Session>();
                         if (activeSession == null)
                         {
@@ -90,6 +108,9 @@ namespace RemoteHealthCare
 
                                 lastUpdate = 0;
 
+                                resistanceValue = 0;
+                                bike?.ChangeBikeResistance((byte)(int)resistanceValue);
+
                                 secondsRemaining = activeSession.SessionDuration;
                                 while (secondsRemaining > 0)
                                 {
@@ -98,6 +119,11 @@ namespace RemoteHealthCare
                                     {
                                         secondsRemaining--;
                                         startTime = currentTime;
+
+                                        if (isAstrand)
+                                        {
+                                            AstrandUpdated();
+                                        }
                                     }
                                 }
 
@@ -111,6 +137,7 @@ namespace RemoteHealthCare
                                 });
 
                                 activeSession = null;
+                                isAstrand = false;
                             }).Start();
                         }
                     }
@@ -125,6 +152,7 @@ namespace RemoteHealthCare
                 case "chat/send":
                     {
                         string message = (string)args.data;
+                        Dispatcher.Invoke(() => { txtChat.Text += "[DOCTOR]: " + message + "\n"; scrollChat.ScrollToBottom(); });
                         if (Panel.chatList != null)
                         {
                             Panel.addText(message);
@@ -137,6 +165,7 @@ namespace RemoteHealthCare
                     {
                         int value = (int)args.data;
 
+                        resistanceValue = (double)args.data;
                         bike?.ChangeBikeResistance((byte)args.data);
 
                         Panel.resistance = value;
@@ -144,6 +173,122 @@ namespace RemoteHealthCare
                     }
                 break;
             }
+        }
+
+        private int SecondsPassed 
+        { 
+            get
+            {
+                return activeSession.SessionDuration - secondsRemaining;
+            }
+        }
+
+        private double resistanceValue = 0;
+        private double currentResistance;
+
+        private async void AstrandUpdated()
+        {
+            if (hrMonitor.HeartRate >= maximumHeartrate)
+            {
+                secondsRemaining = 0;
+                resistanceValue = 0;
+                bike?.ChangeBikeResistance((byte)(int)resistanceValue);
+            }
+
+            switch (astrandStage)
+            {
+                case ASTRAND_STAGE.WARMUP:
+                    {
+                        if (SecondsPassed % 10 == 0)
+                        {
+                            if (bike.CurrentRPM < 56)
+                            {
+                                Dispatcher.Invoke(() => { txtChat.Text += "[ASTRAND]: " + "Speed up" + "\n"; scrollChat.ScrollToBottom(); });
+                            }
+                            else if (bike.CurrentRPM > 64)
+                            {
+                                Dispatcher.Invoke(() => { txtChat.Text += "[ASTRAND]: " + "Slow down" + "\n"; scrollChat.ScrollToBottom(); });
+                            }
+                            else
+                            {
+                                Dispatcher.Invoke(() => { txtChat.Text += "[ASTRAND]: " + "Great job! Keep it up" + "\n"; scrollChat.ScrollToBottom(); });
+                            }
+
+                            resistanceValue = (SecondsPassed / 2);
+                            bike.ChangeBikeResistance((byte)(int)resistanceValue);
+                        }
+
+                        if (SecondsPassed == 119)
+                        {
+                            astrandStage = ASTRAND_STAGE.TESTING;
+                            //this.ShowProgressAsync("Start Testing", "It's game time");
+                        }
+                    }
+                break;
+
+                case ASTRAND_STAGE.TESTING:
+                    {
+                        if (SecondsPassed % 10 == 0)
+                        {
+                            if (bike.CurrentRPM < 56)
+                            {
+                                Dispatcher.Invoke(() => { txtChat.Text += "[ASTRAND]: " + "Speed up" + "\n"; scrollChat.ScrollToBottom(); });
+                            }
+                            else if (bike.CurrentRPM > 64)
+                            {
+                                Dispatcher.Invoke(() => { txtChat.Text += "[ASTRAND]: " + "Slow down" + "\n"; scrollChat.ScrollToBottom(); });
+                            }
+                            else
+                            {
+                                Dispatcher.Invoke(() => { txtChat.Text += "[ASTRAND]: " + "Great job! Keep it up" + "\n"; scrollChat.ScrollToBottom(); });
+                            }
+                        }
+
+                        if (SecondsPassed % 60 == 0 && SecondsPassed < 240)
+                        {
+                            resistanceValue *= CalculateNextResistance();
+                            bike.ChangeBikeResistance((byte)(int)resistanceValue);
+                        }
+
+                        if (SecondsPassed % 15 == 0 && SecondsPassed >= 240)
+                        {
+                            resistanceValue *= CalculateNextResistance();
+                            bike.ChangeBikeResistance((byte)(int)resistanceValue);
+                        }
+
+                        if (SecondsPassed == 359)
+                        {
+                            astrandStage = ASTRAND_STAGE.COOLDOWN;
+                            currentResistance = resistanceValue;
+                            //ProgressDialogController pdc = await this.ShowProgressAsync("Start Cooldown", "Poah nice game gg take some rest");
+                        }
+                    }
+                break;
+
+                case ASTRAND_STAGE.COOLDOWN:
+                    {
+                        if (SecondsPassed % 10 == 0)
+                        {
+                            resistanceValue -= currentResistance / 6;
+                            bike.ChangeBikeResistance((byte)(int)resistanceValue);
+                        }
+
+                        if (SecondsPassed == 420)
+                        {
+                            resistanceValue = 0;
+                            bike.ChangeBikeResistance((byte)(int)resistanceValue);
+                            astrandStage = ASTRAND_STAGE.WARMUP;
+                        }
+                    }
+                break;
+            }
+        }
+
+        private double CalculateNextResistance()
+        {
+            if (hrMonitor.HeartRate == 0)
+                return ((130 / 80) - 1) * 0.75 + 1;
+            return ((130 / hrMonitor.HeartRate) - 1) * 0.75 + 1;
         }
 
         private void OnConnectToDevice(object sender, RoutedEventArgs e)
@@ -165,7 +310,7 @@ namespace RemoteHealthCare
                             bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
                             hrMonitor = new HeartRateMonitor();
 #endif
-                            lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
+                            //lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
                         }
 
                     if (((string)x).Contains("Decathlon"))
@@ -192,6 +337,17 @@ namespace RemoteHealthCare
                 currentDelta = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
                 if (currentDelta - lastUpdate >= 125)
                 {
+                    Dispatcher.Invoke(() =>
+                    {
+                        string distanceStr = string.Format("{0:00.00}", bike.Distance);
+                        lblDistance.Content = $"Distance: {distanceStr}m";
+                        lblHr.Content = $"Heartrate: {hrMonitor.HeartRate}";
+                        lblResistance.Content = $"Resistance: {resistanceValue}";
+                        lblTimeRemaining.Content = $"Time untill next phase: {(astrandStage == ASTRAND_STAGE.WARMUP ? 120 - SecondsPassed : astrandStage == ASTRAND_STAGE.TESTING ? 360 - SecondsPassed : 420 - SecondsPassed).ToString()}";
+                        lblCurrentPhase.Content = $"Current phase: {astrandStage.ToString()}";
+                        meterRpm.Value = bike.CurrentRPM;
+                    });
+
                     App.serverClientWrapper.NetworkConnection.Write(new
                     {
                         Command = "session/update",
@@ -205,12 +361,14 @@ namespace RemoteHealthCare
                                 RPM = bike.CurrentRPM,
                                 Speed = bike.CurrentSpeed,
                                 AvgSpeed = bike.AverageSpeed,
-                            },
+                                Resistance = bike.resistance,
+                                Workload = bike.Workload,
 #if !SIM
-                            HR = hrMonitor.HeartRate
+                                HR = hrMonitor.HeartRate
 #else
-                            HR = rnd.Next(70, 80)
+                                HR = rnd.Next(126, 134)
 #endif
+                            },
                         }
                     });
                     lastUpdate = currentDelta;

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:local="clr-namespace:RemoteHealthCare"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
                       
         WindowTitleBrush="{DynamicResource AppMainColor}"
@@ -28,34 +29,51 @@
             </MenuItem>
         </Menu>
 
-        <Grid Background="{DynamicResource AppSecondColor}">
-            <ScrollViewer>
-                <StackPanel Background="{DynamicResource AppPaddingColor}" x:Name="lvDevices" HorizontalAlignment="Stretch" Orientation="Vertical"/>
-            </ScrollViewer>
-        </Grid>
+        <Grid Background="{DynamicResource AppPaddingColor}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <Border Width="300" Background="White" Margin="1, 2">
-            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ShowGridLines="false" Height="390" Width="300" Margin="0" Background="White">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
+                <lvc:AngularGauge x:Name="meterRpm" Margin="10" FromValue="0" ToValue="130" 
+                          LabelsStep="10" TicksStep="20" Wedge="300"
+                          TicksForeground="White" Foreground="White" 
+                          FontWeight="Bold" FontSize="14"
 
-                <Border Grid.Column="0" Grid.Row="0" Height="350" Width="300" >
-                    <ScrollViewer Height="350" Width="300" VerticalScrollBarVisibility="Auto" Padding="5">
-                        <StackPanel Name="MessagesPanel" Orientation="Vertical" />
-                    </ScrollViewer>
-                </Border>
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          SectionsInnerRadius=".5">
+                    <lvc:AngularGauge.Sections>
+                        <lvc:AngularSection FromValue="0" ToValue="55" Fill="Orange"/>
+                        <lvc:AngularSection FromValue="55" ToValue="65" Fill="Green"/>
+                        <lvc:AngularSection FromValue="65" ToValue="130" Fill="Red"/>
+                    </lvc:AngularGauge.Sections>
+                </lvc:AngularGauge>
 
-                <Border Grid.Column="0" Grid.Row="1" Height="30" Width="300">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Width="300">
-                        <TextBox Name="TXTBoxMessageSend" VerticalAlignment="Center" HorizontalAlignment="Left" Height="30"  Width="250" Padding="5"/>
-                        <Button Name="BTNSend" Click="OnConnectToDevice"  Content="Send" Height="30" Width="50" Padding="5"></Button>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Label x:Name="lblCurrentPhase"  Content="Current phase: " FontFamily="Bahnschrift Light" FontSize="18"/>
+                    <Label x:Name="lblTimeRemaining"  Content="Time untill next phase: " FontFamily="Bahnschrift Light" FontSize="18"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Label x:Name="lblDistance"  Content="Distance: " FontFamily="Bahnschrift Light" FontSize="18"/>
+                    <Label x:Name="lblHr"  Content="Heartrate: " FontFamily="Bahnschrift Light" FontSize="18"/>
+                    <Label x:Name="lblResistance"  Content="Resistance: " FontFamily="Bahnschrift Light" FontSize="18"/>
+                </StackPanel>
             </Grid>
 
-        </Border>
+            <ScrollViewer Grid.Column="1" HorizontalAlignment="Right" Width="250" x:Name="scrollChat">
+                <TextBlock x:Name="txtChat" Background="{DynamicResource AppThirdColor}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+            </ScrollViewer>
+        </Grid>
     </DockPanel>
 </Controls:MetroWindow>

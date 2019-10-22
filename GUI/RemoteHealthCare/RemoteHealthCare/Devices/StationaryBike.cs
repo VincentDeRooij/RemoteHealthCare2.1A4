@@ -39,6 +39,8 @@ namespace RemoteHealthCare.Devices
         public event EventHandler DeviceDataChanged;
 
         private string DeviceName => deviceName;
+        private int workload;
+        public int Workload => workload;
 
         string IDevice.DeviceName => deviceName;
 
@@ -47,6 +49,7 @@ namespace RemoteHealthCare.Devices
         public double currentSpeedData;
         public double averageSpeedData;
         public double distanceData;
+        public byte resistance { get; set; }
 
         public StationaryBike(string deviceName,string username)
             : base()
@@ -56,6 +59,7 @@ namespace RemoteHealthCare.Devices
             averageRPM = 0;
             averageSpeed = 0;
             averageSpeedCounted = 0;
+            resistance = 0;
             this.deviceName = deviceName;
             this.deviceNameData = deviceName;
             this.userNameData = username;
@@ -114,6 +118,13 @@ namespace RemoteHealthCare.Devices
                 {
                     StationaryBikeData bikeData = dataModel.DataPage as StationaryBikeData;
                     averageRPM = ((averageRPM * averageRPMCounted) + bikeData.RPM) / ++averageRPMCounted;
+
+
+                    int instandpowerLSB = bikeData.PageData[5];
+                    int instandpowerMSB = bikeData.PageData[6];
+                    double workload = (((instandpowerMSB | 0b11110000) ^ 0b11110000) << 8) | instandpowerLSB;
+                    this.workload = (int)(workload * 6.1182972778676);
+
                     lastBikeData = bikeData;
                 }
                 else if (dataModel.DataPage.DataPageNumber == 0x19 && lastBikeData == null)
@@ -146,8 +157,9 @@ namespace RemoteHealthCare.Devices
             return checkSumByte;
         }
 
-        public void ChangeBikeResistance(byte resistance)
+        public void ChangeBikeResistance()
         {
+#if !SIM
             string characteristic = "6e40fec3-b5a3-f393-e0a9-e50e24dcca9e";
             
             byte[] data = new byte[13];
@@ -157,10 +169,19 @@ namespace RemoteHealthCare.Devices
             data[2] = 0x4E; // Message type
             data[3] = 0x05; // Message type
             data[4] = 0x30; // Data Type
-            data[11] = resistance; // resistance
+            data[11] = this.resistance; // resistance
             data[12] = CalCheckSum(data);
 
             bluetoothLinkedDevice.WriteCharacteristic(characteristic, data);
+#endif
+        }
+
+        public void ChangeBikeResistance(byte resistance)
+        {
+            this.resistance = resistance;
+#if !SIM
+            ChangeBikeResistance();
+#endif
         }
     }
 }

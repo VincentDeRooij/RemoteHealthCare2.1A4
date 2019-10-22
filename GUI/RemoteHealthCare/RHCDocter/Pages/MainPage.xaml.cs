@@ -154,6 +154,7 @@ namespace RHCDocter.Pages
                 Person p = persons[ClientsListBox.SelectedIndex].Person;
                 Session session = new Session(TXTBoxNameSession.Text, DateTime.Now, int.Parse(TXTBoxTimeSession.Text));
                 SessionManager sw = new SessionManager(persons[ClientsListBox.SelectedIndex], session);
+                sw.OnSessionDone += OnSessionManagerClosed;
                 sw.Show();
             }
         }
@@ -177,6 +178,7 @@ namespace RHCDocter.Pages
                 Person p = persons[ClientsListBox.SelectedIndex].Person;
                 Session s = new Session("t", DateTime.Now, 60);
                 SessionWindow sw = new SessionWindow(ref p, ref s, persons[ClientsListBox.SelectedIndex].Key);
+                //sw.OnSessionDone += OnSessionManagerClosed;
                 sw.Show();
             }
         }
@@ -197,12 +199,20 @@ namespace RHCDocter.Pages
                 case 0:
                     ArchivedSessionPanel.Visibility = Visibility.Hidden;
                     CreateSessionPanel.Visibility = Visibility.Visible;
+                    pnlAstrand.Visibility = Visibility.Hidden;
                     break;
                 case 1:
                     CreateSessionPanel.Visibility = Visibility.Hidden;
                     ArchivedSessionPanel.Visibility = Visibility.Visible;
+                    pnlAstrand.Visibility = Visibility.Hidden;
+
                     TXTBoxNameSession.Text = "";
                     TXTBoxTimeSession.Text = "";
+                    break;
+                case 2:
+                    pnlAstrand.Visibility = Visibility.Visible;
+                    CreateSessionPanel.Visibility = Visibility.Hidden;
+                    ArchivedSessionPanel.Visibility = Visibility.Hidden;
                     break;
                 default:
                     Console.WriteLine("Default case");
@@ -341,6 +351,29 @@ namespace RHCDocter.Pages
             {
                 AddMessageToView(message.IsDoctor, message.Message);
             }
+        }
+
+        private void OnCreateAstrand(object sender, RoutedEventArgs e)
+        {
+            if (ClientsListBox.SelectedIndex < 0)
+                return;
+
+            PersonProxy person = persons[ClientsListBox.SelectedIndex];
+            if (person != null)
+            {
+                AstrandSession session = new AstrandSession(txtAstrandSessionName.Text, DateTime.Now, int.Parse(txtAstrandAge.Text), (bool)rbMale.IsChecked);
+                SessionManager sm = new SessionManager(person, session);
+                sm.OnSessionDone += OnSessionManagerClosed;
+                sm.Show();
+            }
+        }
+
+        private void OnSessionManagerClosed(SessionManager manager)
+        {
+            string sessionId = manager.SessionId;
+            manager.Close();
+            ArchivedWindow aw = new ArchivedWindow(sessionId, manager.IsAstrand);
+            aw.Show();
         }
     }
 }

@@ -73,7 +73,8 @@ namespace RHCServer
                                     Command = "session/create",
                                     Data = new
                                     {
-                                        Session = session
+                                        Session = session,
+                                        IsAstrand = args.Data.IsAstrand
                                     }
                                 });
                             }
@@ -220,6 +221,27 @@ namespace RHCServer
                     {
                         string key = (string)args.Key;
                         authkeys.Where(x => x.Item2.Equals(key)).FirstOrDefault()?.Item1.Write(args);
+                    }
+                break;
+
+                case "doctor/session/done":
+                    {
+                        AstrandSession astrandSession = SessionStorage.Instance.RetrieveAstrandSession((string)args.Data.SessionId);
+                        astrandSession.ReachedSteady = (bool)args.Data.SteadyState;
+                        SessionStorage.Instance.SyncSession(astrandSession);
+                    }
+                break;
+
+                case "history/request":
+                    {
+                        client.Write(new 
+                        { 
+                            Command = $"history/{(string)args.Data.SessionId}/upload",
+                            Data = new
+                            {
+                                Session = ((bool)args.Data.IsAstrand ? SessionStorage.Instance.RetrieveAstrandSession((string)args.Data.SessionId) : SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId))
+                            }
+                        });
                     }
                 break;
             }

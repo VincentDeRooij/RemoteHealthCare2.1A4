@@ -52,9 +52,22 @@
                 </Grid.RowDefinitions>
 
                 <ComboBox Grid.Column="0" Grid.Row="0" Name="ComboBoxSelect" SelectionChanged="CB_CreateOrArchive_Changed" Height="30" Padding="5">
-                    <ComboBoxItem >Create Session</ComboBoxItem>
-                    <ComboBoxItem >Archived Sessions</ComboBoxItem>
+                    <ComboBoxItem>Create Session</ComboBoxItem>
+                    <ComboBoxItem>Archived Sessions</ComboBoxItem>
+                    <ComboBoxItem>Astrand</ComboBoxItem>
                 </ComboBox>
+
+                <Grid Grid.Column="0" Grid.Row="1" x:Name="pnlAstrand" Visibility="Hidden">
+                    <StackPanel VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                        <Label Content="Age:" />
+                        <TextBox x:Name="txtAstrandAge" Margin="5" />
+                        <Label Content="Name:" />
+                        <TextBox x:Name="txtAstrandSessionName" Margin="5" />
+                        <RadioButton Content="Male" Margin="5" x:Name="rbMale" GroupName="Gender" IsChecked="True" />
+                        <RadioButton Content="Female" Margin="5" x:Name="rbFemale" GroupName="Gender" />
+                    </StackPanel>
+                    <Button VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Content="Confirm" Height="30" Click="OnCreateAstrand" />
+                </Grid>
 
                 <StackPanel Grid.Column="0" Grid.Row="1" Name="CreateSessionPanel" Visibility="Hidden" Orientation="Vertical" HorizontalAlignment="Stretch"  Height="570" Width="300">
                     <Grid VerticalAlignment="Center" HorizontalAlignment="Left" ShowGridLines="false" Height="540" Width="300">
@@ -65,6 +78,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
+                        <CheckBox x:Name="cbAstrand" IsChecked="False" />
                         <Label Grid.Column="0" Grid.Row="0" Width="150">Name Session:</Label>
                         <TextBox Grid.Column="0" Grid.Row="1" Name="TXTBoxNameSession" Width="150"></TextBox>
 
