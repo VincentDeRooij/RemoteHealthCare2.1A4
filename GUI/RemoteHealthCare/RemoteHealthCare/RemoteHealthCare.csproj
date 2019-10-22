@@ -51,6 +51,9 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Alles tegelijk|AnyCPU'">
+    <OutputPath>bin\Alles tegelijk\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BLELibrary">
       <HintPath>..\BLELibrary.dll</HintPath>

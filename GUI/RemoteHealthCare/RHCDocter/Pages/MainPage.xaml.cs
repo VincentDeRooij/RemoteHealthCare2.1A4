@@ -136,6 +136,7 @@ namespace RHCDocter.Pages
                 Key = persons[ClientsListBox.SelectedIndex].Key
             });
             AddMessageToView(true, message);
+            TXTBoxMessageSend.Text = "";
         }
 
         private void Button_Click_Create(object sender, RoutedEventArgs e)
