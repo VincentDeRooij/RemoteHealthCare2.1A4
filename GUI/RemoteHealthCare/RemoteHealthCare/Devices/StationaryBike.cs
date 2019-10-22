@@ -146,7 +146,7 @@ namespace RemoteHealthCare.Devices
             return checkSumByte;
         }
 
-        private void changeBikeResistance(byte resistance)
+        public void ChangeBikeResistance(byte resistance)
         {
             string characteristic = "6e40fec3-b5a3-f393-e0a9-e50e24dcca9e";
             

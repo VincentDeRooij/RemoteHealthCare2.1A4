@@ -136,6 +136,9 @@ namespace RemoteHealthCare
                 case "resistance/send":
                     {
                         int value = (int)args.data;
+
+                        bike?.ChangeBikeResistance((byte)args.data);
+
                         Panel.resistance = value;
                         Panel.drawValues();
                     }
@@ -148,18 +151,20 @@ namespace RemoteHealthCare
             Dialogs.ConnectDevice wndConnect = new Dialogs.ConnectDevice();
             wndConnect.DeviceClicked += (x, y) =>
             {
-#if SIM
-                IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
-                bike = selectedDevice as StationaryBike;
-                hrMonitor = new HeartRateMonitor();
-#else
                 if (bike == null || hrMonitor == null)
                 {
                     if (((string)x).Contains("Tacx"))
                         if (bike == null)
                         {
+#if !SIM
                             bike = new Devices.StationaryBike((string)x, "");
                             bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
+#else
+                            IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
+                            bike = selectedDevice as StationaryBike;
+                            bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
+                            hrMonitor = new HeartRateMonitor();
+#endif
                             lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
                         }
 
@@ -169,7 +174,6 @@ namespace RemoteHealthCare
                             hrMonitor = new Devices.HeartRateMonitor();
                         }
                 }
-#endif
             };
             wndConnect.ShowDialog();
         }
@@ -202,7 +206,11 @@ namespace RemoteHealthCare
                                 Speed = bike.CurrentSpeed,
                                 AvgSpeed = bike.AverageSpeed,
                             },
+#if !SIM
                             HR = hrMonitor.HeartRate
+#else
+                            HR = rnd.Next(70, 80)
+#endif
                         }
                     });
                     lastUpdate = currentDelta;

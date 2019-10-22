@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RemoteHealthCare.Devices;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,7 +18,7 @@ namespace RemoteHealthCare.Simulator
             connectedDevices = new List<Devices.IDevice>();
             for (int i = 0; i < 15; i++)
             {
-                Devices.IDevice simulatedDevice = rnd.Next(2) > 0 ? new Devices.StationaryBike($"Tacx Flux { string.Format("{0:D5}", rnd.Next(0, 20000))}","") : null;
+                Devices.IDevice simulatedDevice = rnd.Next(2) > 0 ? new Devices.StationaryBike($"Tacx Flux { string.Format("{0:D5}", rnd.Next(0, 20000))}","") as IDevice : new RemoteHealthCare.Devices.HeartRateMonitor() as IDevice;
                 if (simulatedDevice != null && connectedDevices.Where(x => x.DeviceName == simulatedDevice.DeviceName).Count() == 0)
                     connectedDevices.Add(simulatedDevice);
             }
@@ -27,7 +28,7 @@ namespace RemoteHealthCare.Simulator
                 while (true)
                 {
                     connectedDevices.ForEach(x => x.PushDataChange(new byte[] { 0xA4, 0x09, 0x4E, 0x05, 0x10, 0x19, 0x04, (byte)rnd.Next(0, 254), 0x01, 0x00, 0xFF, 0x24, 0x30 }));
-                    connectedDevices.ForEach(x => x.PushDataChange(new byte[] { 0xA4, 0x09, 0x4E, 0x05, 0x19, 0x00, (byte)rnd.Next(30, 120), 0x00, 0x00, 0x00, 0x00, 0x00, 0x30 }));
+                    connectedDevices.ForEach(x => x.PushDataChange(new byte[] { 0xA4, 0x09, 0x4E, 0x05, 0x19, 0x00, (byte)rnd.Next(50, 60), 0x00, 0x00, 0x00, 0x00, 0x00, 0x30 }));
                     Thread.Sleep(20);
                 }
             }).Start();
