@@ -153,16 +153,23 @@ namespace RemoteHealthCare
                 bike = selectedDevice as StationaryBike;
                 hrMonitor = new HeartRateMonitor();
 #else
-                IDevice selectedDevice = ((string)x).Contains("Tacx") || ((string)x).Contains("Decathlon") ? new Devices.StationaryBike((string)x, "") : null;
-#endif
-                Console.WriteLine(selectedDevice);
-                selectedDevice.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
-                if (!devices.Contains(selectedDevice))
+                if (bike == null || hrMonitor == null)
                 {
-                    devices.Add(selectedDevice);
-                    StationaryBike bike = selectedDevice as StationaryBike;
-                    lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
+                    if (((string)x).Contains("Tacx"))
+                        if (bike == null)
+                        {
+                            bike = new Devices.StationaryBike((string)x, "");
+                            bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
+                            lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
+                        }
+
+                    if (((string)x).Contains("Decathlon"))
+                        if (hrMonitor == null)
+                        {
+                            hrMonitor = new Devices.HeartRateMonitor();
+                        }
                 }
+#endif
             };
             wndConnect.ShowDialog();
         }
@@ -181,7 +188,6 @@ namespace RemoteHealthCare
                 currentDelta = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
                 if (currentDelta - lastUpdate >= 125)
                 {
-                    hrMonitor.HeartRate = 100;
                     App.serverClientWrapper.NetworkConnection.Write(new
                     {
                         Command = "session/update",
@@ -195,12 +201,15 @@ namespace RemoteHealthCare
                                 RPM = bike.CurrentRPM,
                                 Speed = bike.CurrentSpeed,
                                 AvgSpeed = bike.AverageSpeed,
-                            }
+                            },
+                            HR = hrMonitor.HeartRate
                         }
                     });
                     lastUpdate = currentDelta;
                 }
             }
         }
+
+        Random rnd = new Random(DateTime.Now.Millisecond);
     }
 }

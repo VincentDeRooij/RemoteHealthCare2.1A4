@@ -98,6 +98,10 @@ namespace RHCCore.Networking
                     OnReceived?.Invoke(this, JsonConvert.DeserializeObject<dynamic>(Encoding.ASCII.GetString(networkMessage)));
                 }
             }
+            catch (NotSupportedException e)
+            {
+                Console.WriteLine(e.Message);
+            }
             catch (Exception e)
             {
                 OnError?.Invoke(this, e);

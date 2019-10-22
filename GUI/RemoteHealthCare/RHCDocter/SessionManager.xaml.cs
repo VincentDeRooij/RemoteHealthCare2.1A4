@@ -1,8 +1,10 @@
 ﻿using LiveCharts;
 using LiveCharts.Wpf;
+using RHCCore.Networking;
 using RHCCore.Networking.Models;
 using RHCDocter.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace RHCDocter
 {
@@ -31,12 +34,16 @@ namespace RHCDocter
         public List<string> Labels { get; set; }
         public Func<double, string> YFormatter { get; set; }
 
+        private ConcurrentQueue<Tuple<IConnection, dynamic>> networkMessages;
+        
         private DateTime startedAt;
         private int oldValue = 0;
 
         public SessionManager(PersonProxy client, Session session)
         {
             InitializeComponent();
+
+            this.networkMessages = new ConcurrentQueue<Tuple<IConnection, dynamic>>();
 
             App.TcpClientWrapper.OnReceived += OnReceived;
 
@@ -67,48 +74,70 @@ namespace RHCDocter
                     PointGeometry = DefaultGeometries.Circle,
                     PointGeometrySize = 8
                 },
+
+                new LineSeries
+                {
+                    Title = "HR",
+                    Values = new ChartValues<double> { },
+                    PointGeometry = DefaultGeometries.Diamond,
+                    PointGeometrySize = 8,
+                    Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 10, 10))
+                },
             };
 
             Labels = new List<string>();
             YFormatter = value => value.ToString();
             DataContext = this;
+            DispatcherTimer updateTimer = new DispatcherTimer()
+            {
+                Interval = TimeSpan.FromSeconds(0.5),
+            };
+
+            updateTimer.Tick += async (x, y) =>
+            {
+                Tuple<IConnection, dynamic> networkMessage;
+                while (networkMessages.TryDequeue(out networkMessage))
+                {
+                    string command = (string)networkMessage.Item2.Command;
+                    if (command == $"session/{sessionId}/ready")
+                    {
+                        bttnStart.IsEnabled = true;
+                    }
+
+                    if (command == $"session/{sessionId}/updated")
+                    {
+                        int currentValue = (int)networkMessage.Item2.Data.SecondsPassed;
+                        if (currentValue != oldValue)
+                        {
+                            if (currentValue % 60 == 0)
+                                minutesPassed++;
+
+                            pbDuration.Value = currentValue;
+                            oldValue = currentValue;
+
+                            Labels.Add(string.Format("{0:D2}:{1:D2}", minutesPassed, currentValue % 60));
+                            int RPM = (int)networkMessage.Item2.Data.BikeData.RPM;
+                            meterRpm.Value = RPM;
+                            this.SeriesCollection[0].Values.Add((double)RPM);
+                            this.SeriesCollection[1].Values.Add((double)networkMessage.Item2.Data.HR);
+                        }
+                    }
+
+                    if (command == $"session/{sessionId}/done")
+                    {
+                        bttnStart.IsEnabled = false;
+                        bttnStop.IsEnabled = false;
+                    }
+                }
+            };
+
+            updateTimer.Start();
         }
 
+        private int minutesPassed = 0;
         private void OnReceived(RHCCore.Networking.IConnection connection, dynamic args)
         {
-            string command = (string)args.Command;
-            if (command == $"session/{sessionId}/ready")
-            {
-                Dispatcher.Invoke(() => bttnStart.IsEnabled = true);
-            }
-
-            if (command == $"session/{sessionId}/updated")
-            {
-                Console.WriteLine(args);
-                Dispatcher.Invoke(() =>
-                {
-                    int currentValue = (int)args.Data.SecondsPassed;
-                    if (currentValue != oldValue)
-                    {
-                        pbDuration.Value = currentValue;
-                        oldValue = currentValue;
-                        Labels.Add(startedAt.AddSeconds(currentValue).ToString("mm:ss"));
-
-                        int RPM = (int)args.Data.BikeData.RPM;
-                        meterRpm.Value = RPM;
-                        this.SeriesCollection[0].Values.Add((double)RPM);
-                    }
-                });
-            }
-
-            if (command == $"session/{sessionId}/done")
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    bttnStart.IsEnabled = false;
-                    bttnStop.IsEnabled = false;
-                });
-            }
+            networkMessages.Enqueue(new Tuple<IConnection, dynamic>(connection, args));
         }
 
         private void OnStartClicked(object sender, RoutedEventArgs e)

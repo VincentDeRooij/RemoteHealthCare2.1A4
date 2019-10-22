@@ -332,7 +332,7 @@ namespace RHCDocter.Pages
 
             foreach (string archivedSession in p.Sessions)
             {
-                AddArchivedSessionToView($"{archivedSession} - {archivedSession}");
+                AddArchivedSessionToView($"{archivedSession}");
             }
 
             resetMessagesView();
