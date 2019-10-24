@@ -162,7 +162,7 @@ namespace RHCDocter.Pages
         private void Button_Click_Confirm(object sender, RoutedEventArgs e)
         {
             int index = ArchivedSessionsListBox.SelectedIndex;
-            string archivedSession = listPersons[ClientsListBox.SelectedIndex].Sessions[index];
+            string archivedSession = persons[ClientsListBox.SelectedIndex].Person.Sessions[index];
             Console.Out.WriteLine($"index: {index}");
 
             if (ClientsListBox.SelectedIndex < 0)
@@ -175,11 +175,8 @@ namespace RHCDocter.Pages
             }
             else
             {
-                Person p = persons[ClientsListBox.SelectedIndex].Person;
-                Session s = new Session("t", DateTime.Now, 60);
-                SessionWindow sw = new SessionWindow(ref p, ref s, persons[ClientsListBox.SelectedIndex].Key);
-                //sw.OnSessionDone += OnSessionManagerClosed;
-                sw.Show();
+                ArchivedWindow aw = new ArchivedWindow(archivedSession, true);
+                aw.Show();
             }
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -234,13 +235,32 @@ namespace RHCServer
 
                 case "history/request":
                     {
-                        client.Write(new 
-                        { 
-                            Command = $"history/{(string)args.Data.SessionId}/upload",
-                            Data = new
+                        string json = JsonConvert.SerializeObject(((bool)args.Data.IsAstrand ? SessionStorage.Instance.RetrieveAstrandSession((string)args.Data.SessionId) : SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId)));
+                        byte[] jsonBuffer = Encoding.ASCII.GetBytes(json);
+                        List<byte> buffer = new List<byte>(jsonBuffer);
+                        client.Write(new
+                        {
+                            Command = $"history/{(string)args.Data.SessionId}/start",
+                        });
+
+                        while (buffer.Count > 0)
+                        {
+                            int remaining = buffer.Count >= 4096 ? 4096 : buffer.Count;
+                            client.Write(new
                             {
-                                Session = ((bool)args.Data.IsAstrand ? SessionStorage.Instance.RetrieveAstrandSession((string)args.Data.SessionId) : SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId))
-                            }
+                                Command = $"history/{(string)args.Data.SessionId}/upload",
+                                Data = new
+                                {
+                                    Session = buffer.GetRange(0, remaining)
+                                }
+                            });
+
+                            buffer.RemoveRange(0, remaining);
+                        }
+
+                        client.Write(new
+                        {
+                            Command = $"history/{(string)args.Data.SessionId}/done",
                         });
                     }
                 break;

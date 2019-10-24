@@ -13,6 +13,7 @@ namespace RHCServer
     public class SessionStorage
     {
         private static SessionStorage _instance;
+        private static object writeLock = new object();
         public static SessionStorage Instance { get { if (_instance == null) _instance = new SessionStorage(); return _instance; } }
 
         private SessionStorage()
@@ -23,53 +24,65 @@ namespace RHCServer
 
         public Session RetrieveSession(string sessionId)
         {
-            if (!SessionExists(sessionId))
-                return null;
+            lock (writeLock)
+            {
+                if (!SessionExists(sessionId))
+                    return null;
 
-            return JsonConvert.DeserializeObject<Session>(File.ReadAllText($"Sessions/{sessionId}.data"));
+                return JsonConvert.DeserializeObject<Session>(File.ReadAllText($"Sessions/{sessionId}.data"));
+            }
         }
 
         public AstrandSession RetrieveAstrandSession(string sessionId)
         {
-            if (!SessionExists(sessionId))
-                return null;
+            lock (writeLock)
+            {
+                if (!SessionExists(sessionId))
+                    return null;
 
-            return JsonConvert.DeserializeObject<AstrandSession>(File.ReadAllText($"Sessions/{sessionId}.data"));
+                return JsonConvert.DeserializeObject<AstrandSession>(File.ReadAllText($"Sessions/{sessionId}.data"));
+            }
         }
 
         public bool CreateSession(Session session)
         {
-            try
+            lock (writeLock)
             {
-                using (FileStream fs = new FileStream($"Sessions/{session.SessionId}.data", FileMode.Create, FileAccess.ReadWrite))
+                try
                 {
-                    byte[] sessionBuffer = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(session));
-                    fs.Write(sessionBuffer, 0, sessionBuffer.Length);
+                    using (FileStream fs = new FileStream($"Sessions/{session.SessionId}.data", FileMode.Create, FileAccess.ReadWrite))
+                    {
+                        byte[] sessionBuffer = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(session));
+                        fs.Write(sessionBuffer, 0, sessionBuffer.Length);
+                    }
+                    return true;
                 }
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return false;
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    return false;
+                }
             }
         }
 
         public bool SyncSession(Session session)
         {
-            try
+            lock (writeLock)
             {
-                using (FileStream fs = new FileStream($"Sessions/{session.SessionId}.data", FileMode.Truncate, FileAccess.ReadWrite))
+                try
                 {
-                    byte[] sessionBuffer = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(session));
-                    fs.Write(sessionBuffer, 0, sessionBuffer.Length);
+                    using (FileStream fs = new FileStream($"Sessions/{session.SessionId}.data", FileMode.Truncate, FileAccess.ReadWrite))
+                    {
+                        byte[] sessionBuffer = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(session));
+                        fs.Write(sessionBuffer, 0, sessionBuffer.Length);
+                    }
+                    return true;
                 }
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return false;
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    return false;
+                }
             }
         }
 

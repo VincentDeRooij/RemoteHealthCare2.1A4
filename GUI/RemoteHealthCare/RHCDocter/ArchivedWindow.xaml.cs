@@ -30,6 +30,7 @@ namespace RHCDocter
         public Func<double, string> YFormatter { get; set; }
 
         private bool IsAstrand;
+        private StringBuilder jsonBuilder = new StringBuilder();
 
         public ArchivedWindow(string sessionId, bool isAstrand)
         {
@@ -87,36 +88,55 @@ namespace RHCDocter
         private void OnReceived(RHCCore.Networking.IConnection sender, dynamic args)
         {
             string command = (string)args.Command;
+            if (command == $"history/{sessionId}/start")
+            {
+                jsonBuilder = new StringBuilder();
+            }
+
             if (command == $"history/{sessionId}/upload")
             {
+                byte[] buffer = (args.Data.Session as JArray).ToObject<List<byte>>().ToArray();
+                string packet = Encoding.ASCII.GetString(buffer);
+                jsonBuilder.Append(packet);
+            }
+
+            if (command == $"history/{sessionId}/done")
+            {
+                Console.WriteLine(jsonBuilder.ToString());
+                dynamic dataObject;
+                dataObject = JsonConvert.DeserializeObject<dynamic>(jsonBuilder.ToString());
+
+                Session rootSession = JsonConvert.DeserializeObject<Session>(jsonBuilder.ToString());
+
                 if (IsAstrand)
                 {
+                    AstrandSession astrandSession = JsonConvert.DeserializeObject<AstrandSession>(jsonBuilder.ToString());
                     Dispatcher.Invoke(() =>
                     {
-                        AstrandSession astrandSession = JsonConvert.DeserializeObject<AstrandSession>(args.Data.Session);
-
                         lblVO2.Visibility = Visibility.Visible;
                         if (astrandSession.ReachedSteady && astrandSession.BikeData.Count > 2800)
-                            lblVO2.Content = $"Client did reach steady-state, calculated VO2max: {CalculateVO2Max(130, astrandSession.BikeData[2800].Workload, astrandSession.IsMale, astrandSession.GetFactor())} L/min";
+                            lblVO2.Content = $"Client did reach steady-state, calculated VO2max: { CalculateVO2Max((int)130, (int)astrandSession.BikeData[2800].Workload, (bool)astrandSession.IsMale, (double)astrandSession.GetFactor())} L/min";
                         else
                             lblVO2.Content = "Client did not reach steady-state";
                     });
                 }
 
-                List<dynamic> collection = (args.Data.Session.BikeData as JArray).ToObject<List<dynamic>>();
+                List<dynamic> collection = (dataObject.BikeData as JArray).ToObject<List<dynamic>>();
                 List<object> heartData = new List<object>();
                 List<object> rpmData = new List<object>();
                 List<object> resistanceData = new List<object>();
 
-                for (int i = 0; i < collection.Count; i++)
+                for (int i = 0; i < collection.Count; i += 16)
                 {
+                    int currentSecond = (i / 8);
                     heartData.Add((double)collection[i].HR);
                     rpmData.Add((double)collection[i].RPM);
                     resistanceData.Add((double)collection[i].Resistance);
+                    Labels.Add(string.Format("{0:D2}", currentSecond));
                 }
 
-                this.SeriesCollection[0].Values.AddRange(heartData);
-                this.SeriesCollection[1].Values.AddRange(rpmData);
+                this.SeriesCollection[1].Values.AddRange(heartData);
+                this.SeriesCollection[0].Values.AddRange(rpmData);
                 this.SeriesCollection[2].Values.AddRange(resistanceData);
             }
         }

@@ -17,6 +17,7 @@ namespace RHCCore.Networking
     {
         private SslStream networkStream;
         private object networkLock;
+        private object writeLock = new object();
 
         private byte[] lastMessage;
         public byte[] LastMessage => lastMessage;
@@ -62,16 +63,19 @@ namespace RHCCore.Networking
 
         public void Write(byte[] data)
         {
-            try
+            lock (writeLock)
             {
-                byte[] messageLength = BitConverter.GetBytes(data.Length);
-                networkStream.Write(messageLength, 0, messageLength.Length);
-                networkStream.Write(data, 0, data.Length);
-            }                               
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                active = false;
+                try
+                {
+                    byte[] messageLength = BitConverter.GetBytes(data.Length);
+                    networkStream.Write(messageLength, 0, messageLength.Length);
+                    networkStream.Write(data, 0, data.Length);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    active = false;
+                }
             }
         }
 
