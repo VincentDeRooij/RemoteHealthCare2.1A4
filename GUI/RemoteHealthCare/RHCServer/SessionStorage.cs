@@ -73,7 +73,8 @@ namespace RHCServer
                 {
                     using (FileStream fs = new FileStream($"Sessions/{session.SessionId}.data", FileMode.Truncate, FileAccess.ReadWrite))
                     {
-                        byte[] sessionBuffer = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(session));
+                        string jsonObject = JsonConvert.SerializeObject(session);
+                        byte[] sessionBuffer = Encoding.ASCII.GetBytes(jsonObject);
                         fs.Write(sessionBuffer, 0, sessionBuffer.Length);
                     }
                     return true;

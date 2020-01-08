@@ -186,7 +186,7 @@ namespace RemoteHealthCare
         private double resistanceValue = 0;
         private double currentResistance;
 
-        private async void AstrandUpdated()
+        private void AstrandUpdated()
         {
             if (hrMonitor.HeartRate >= maximumHeartrate)
             {
@@ -224,7 +224,7 @@ namespace RemoteHealthCare
                             //this.ShowProgressAsync("Start Testing", "It's game time");
                         }
                     }
-                break;
+                    break;
 
                 case ASTRAND_STAGE.TESTING:
                     {
@@ -263,7 +263,7 @@ namespace RemoteHealthCare
                             //ProgressDialogController pdc = await this.ShowProgressAsync("Start Cooldown", "Poah nice game gg take some rest");
                         }
                     }
-                break;
+                    break;
 
                 case ASTRAND_STAGE.COOLDOWN:
                     {
@@ -280,15 +280,16 @@ namespace RemoteHealthCare
                             astrandStage = ASTRAND_STAGE.WARMUP;
                         }
                     }
-                break;
+                    break;
             }
         }
 
         private double CalculateNextResistance()
         {
             if (hrMonitor.HeartRate == 0)
-                return ((130 / 80) - 1) * 0.75 + 1;
-            return ((130 / hrMonitor.HeartRate) - 1) * 0.75 + 1;
+                return ((130d / 80d) - 1d) * 0.75 + 1d;
+            else
+                return ((130d / (double)hrMonitor.HeartRate) - 1d) * 0.75 + 1d;
         }
 
         private void OnConnectToDevice(object sender, RoutedEventArgs e)
@@ -299,25 +300,24 @@ namespace RemoteHealthCare
                 if (bike == null || hrMonitor == null)
                 {
                     if (((string)x).Contains("Tacx"))
-                        if (bike == null)
-                        {
+                    {
 #if !SIM
-                            bike = new Devices.StationaryBike((string)x, "");
-                            bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
+                        bike = new Devices.StationaryBike((string)x, "");
+                        bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
 #else
-                            IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
-                            bike = selectedDevice as StationaryBike;
-                            bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
-                            hrMonitor = new HeartRateMonitor();
+                        IDevice selectedDevice = Simulator.Simulator.Instance.OpenDevice((string)x);
+                        bike = selectedDevice as StationaryBike;
+                        bike.DeviceDataChanged += SelectedDevice_DeviceDataChanged;
+                        hrMonitor = new HeartRateMonitor();
 #endif
-                            //lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
-                        }
+                        //lvDevices.Children.Add(new UserControls.StationaryBikeControl(ref bike));
+                    }
+
 
                     if (((string)x).Contains("Decathlon"))
-                        if (hrMonitor == null)
-                        {
-                            hrMonitor = new Devices.HeartRateMonitor();
-                        }
+                    {
+                        hrMonitor = new Devices.HeartRateMonitor();
+                    }
                 }
             };
             wndConnect.ShowDialog();
@@ -342,11 +342,16 @@ namespace RemoteHealthCare
                         string distanceStr = string.Format("{0:00.00}", bike.Distance);
                         lblDistance.Content = $"Distance: {distanceStr}m";
                         lblHr.Content = $"Heartrate: {hrMonitor.HeartRate}";
-                        lblResistance.Content = $"Resistance: {resistanceValue}";
+                        lblResistance.Content = $"Resistance: {resistanceValue.ToString("0.00")}";
                         lblTimeRemaining.Content = $"Time untill next phase: {(astrandStage == ASTRAND_STAGE.WARMUP ? 120 - SecondsPassed : astrandStage == ASTRAND_STAGE.TESTING ? 360 - SecondsPassed : 420 - SecondsPassed).ToString()}";
                         lblCurrentPhase.Content = $"Current phase: {astrandStage.ToString()}";
                         meterRpm.Value = bike.CurrentRPM;
                     });
+
+#if SIM
+                    if (hrMonitor != null)
+                        hrMonitor.HeartRate = rnd.Next(126, 134);
+#endif
 
                     App.serverClientWrapper.NetworkConnection.Write(new
                     {

@@ -63,6 +63,8 @@
                         <TextBox x:Name="txtAstrandAge" Margin="5" />
                         <Label Content="Name:" />
                         <TextBox x:Name="txtAstrandSessionName" Margin="5" />
+                        <Label Content="Weight:" />
+                        <TextBox x:Name="txtAstrandWeight" Margin="5" />
                         <RadioButton Content="Male" Margin="5" x:Name="rbMale" GroupName="Gender" IsChecked="True" />
                         <RadioButton Content="Female" Margin="5" x:Name="rbFemale" GroupName="Gender" />
                     </StackPanel>

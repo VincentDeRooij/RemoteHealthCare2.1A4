@@ -62,12 +62,15 @@ namespace RHCCore.Networking.Models
         public bool IsMale { get; set; }
         public bool ReachedSteady { get; set; }
 
-        public AstrandSession(string name, DateTime startDate, int age, bool isMale = true)
+        public double Weight { get; set; }
+
+        public AstrandSession(string name, double weight, DateTime startDate, int age, bool isMale = true)
             : base(name, startDate, 420)
         {
             this.Age = age;
             this.IsMale = isMale;
             this.ReachedSteady = false;
+            this.Weight = weight;
         }
 
         public int GetHeartrate()

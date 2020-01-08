@@ -115,7 +115,7 @@ namespace RHCDocter
                     {
                         lblVO2.Visibility = Visibility.Visible;
                         if (astrandSession.ReachedSteady && astrandSession.BikeData.Count > 2800)
-                            lblVO2.Content = $"Client did reach steady-state, calculated VO2max: { CalculateVO2Max((int)130, (int)astrandSession.BikeData[2800].Workload, (bool)astrandSession.IsMale, (double)astrandSession.GetFactor())} L/min";
+                            lblVO2.Content = $"Client did reach steady-state, calculated VO2max: { CalculateVO2Max((int)130, (int)astrandSession.BikeData[2800].Workload, (bool)astrandSession.IsMale, (double)astrandSession.GetFactor(), astrandSession.Weight).ToString("0.00")} mL/kg/min";
                         else
                             lblVO2.Content = "Client did not reach steady-state";
                     });
@@ -141,12 +141,12 @@ namespace RHCDocter
             }
         }
 
-        private double CalculateVO2Max(int heartRate, int workload, bool isMale, double factor)
+        private double CalculateVO2Max(int heartRate, int workload, bool isMale, double factor, double weight)
         {
             if (isMale)
-                return ((0.00212 * workload + 0.299) / (0.769 * heartRate - 48.5) * 100) * factor;
+                return (((0.00212 * workload + 0.299) / (0.769 * heartRate - 48.5) * 100) * factor) * weight;
             else
-                return ((0.00193 * workload + 0.326) / (0.769 * heartRate - 56.1) * 100) * factor;
+                return (((0.00193 * workload + 0.326) / (0.769 * heartRate - 56.1) * 100) * factor) * weight;
         }
     }
 }

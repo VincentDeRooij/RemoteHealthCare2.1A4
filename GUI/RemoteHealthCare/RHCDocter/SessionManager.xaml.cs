@@ -59,7 +59,7 @@ namespace RHCDocter
                 Command = "session/create",
                 Data = new
                 {
-                    Session = session,
+                    Session = session.GetType() == typeof(AstrandSession) ? (AstrandSession)session : session,
                     Key = client.Key,
                     IsAstrand = session.GetType() == typeof(AstrandSession)
                 }

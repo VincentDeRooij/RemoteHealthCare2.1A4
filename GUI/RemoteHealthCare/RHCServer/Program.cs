@@ -55,7 +55,12 @@ namespace RHCServer
                 case "session/create":
                     {
                         string authkey = (string)args.Data.Key;
-                        Session session = (args.Data.Session as JObject).ToObject<Session>();
+                        Session session = null;
+                        if ((bool)args.Data.IsAstrand)
+                            session = (args.Data.Session as JObject).ToObject<AstrandSession>();
+                        else
+                            session = (args.Data.Session as JObject).ToObject<Session>();
+
                         IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
                         if (SessionStorage.Instance.CreateSession(session))
                         {

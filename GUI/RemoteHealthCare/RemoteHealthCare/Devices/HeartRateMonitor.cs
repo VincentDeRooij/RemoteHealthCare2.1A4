@@ -31,13 +31,17 @@ namespace RemoteHealthCare.Devices
                 await SetupDevice(this.DeviceName);
             }).Wait();
 #endif
-            OnDeviceDataChanged();
+            //OnDeviceDataChanged();
         }
 
         private async Task SetupDevice(string deviceName)
         {
             bluetoothLinkedDevice = new BLE();
-            int errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+            int errorCode = 1;
+            while (errorCode != 0)
+            {
+                errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+            }
             errorCode = await bluetoothLinkedDevice.SetService("HeartRate");
             bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
             errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("HeartRateMeasurement");

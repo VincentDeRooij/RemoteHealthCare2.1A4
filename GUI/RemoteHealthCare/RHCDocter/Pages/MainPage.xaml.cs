@@ -356,9 +356,10 @@ namespace RHCDocter.Pages
                 return;
 
             PersonProxy person = persons[ClientsListBox.SelectedIndex];
-            if (person != null)
+            double weightResult;
+            if (person != null && double.TryParse(txtAstrandWeight.Text, out weightResult))
             {
-                AstrandSession session = new AstrandSession(txtAstrandSessionName.Text, DateTime.Now, int.Parse(txtAstrandAge.Text), (bool)rbMale.IsChecked);
+                AstrandSession session = new AstrandSession(txtAstrandSessionName.Text, weightResult, DateTime.Now, int.Parse(txtAstrandAge.Text), (bool)rbMale.IsChecked);
                 SessionManager sm = new SessionManager(person, session);
                 sm.OnSessionDone += OnSessionManagerClosed;
                 sm.Show();

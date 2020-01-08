@@ -8,12 +8,12 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("RemoteHealthCare")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Oh hallo, fijn dat je dit leest ;)")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("RemoteHealthCare")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("Beetje bij Stijn natuurlijk")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
@@ -53,3 +53,6 @@ using System.Windows;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+
+//Altijd belangrijk alhoewel DnSpy dit toch wel sloopt :( Groetjes Stijn
+[assembly: SuppressIldasm()]

@@ -26,13 +26,13 @@ namespace RemoteHealthCare.Dialogs
         private BLE connectionLister;
         private List<string> foundConnections;
         public event EventHandler DeviceClicked;
+        Timer timer = new Timer();
 
         public ConnectDevice()
         {
             InitializeComponent();
             connectionLister = new BLE();
             foundConnections = new List<string>();
-            Timer timer = new Timer();
             timer.Interval = 50;
             timer.Elapsed += OnRefresh;
             timer.Start();
@@ -48,19 +48,15 @@ namespace RemoteHealthCare.Dialogs
 #endif
             for (int i = 0; i < foundDevices.Count; i++)
             {
-                if (!foundDevices[i].Contains("Decathlon") && !foundDevices[i].Contains("Tacx"))
-                    continue;
-
                 string deviceName = foundDevices[i];
-                if (!foundConnections.Contains(deviceName))
+                foundConnections.Add(deviceName);
+                Dispatcher.Invoke(() =>
                 {
-                    foundConnections.Add(deviceName);
-                    Dispatcher.Invoke(() =>
-                    {
-                        lbConnections.Items.Add(new UserControls.DeviceConnection(deviceName));
-                    });
-                }
+                    lbConnections.Items.Add(new UserControls.DeviceConnection(deviceName));
+                });
             }
+
+            timer.Stop();
         }
 
         private void OnDeviceTryConnect(object sender, MouseButtonEventArgs e)

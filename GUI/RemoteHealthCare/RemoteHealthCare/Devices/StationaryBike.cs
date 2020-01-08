@@ -64,12 +64,9 @@ namespace RemoteHealthCare.Devices
             this.deviceNameData = deviceName;
             this.userNameData = username;
 #if !SIM
-            Task.Run(async () =>
-            {
-                await SetupDevice(deviceName);
-            }).Wait();
+            SetupDevice(deviceName);
 #endif
-            OnDeviceDataChanged();
+            //OnDeviceDataChanged();
         }
 
 #if !SIM
@@ -79,7 +76,11 @@ namespace RemoteHealthCare.Devices
         private async Task SetupDevice(string deviceName)
         {
             bluetoothLinkedDevice = new BLE();
-            int errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+            int errorCode = 1;
+            while (errorCode != 0)
+            {
+                errorCode = await bluetoothLinkedDevice.OpenDevice(deviceName);
+            }
             errorCode = await bluetoothLinkedDevice.SetService("6e40fec1-b5a3-f393-e0a9-e50e24dcca9e");
             bluetoothLinkedDevice.SubscriptionValueChanged += OnNotifyDataChanged;
             errorCode = await bluetoothLinkedDevice.SubscribeToCharacteristic("6e40fec2-b5a3-f393-e0a9-e50e24dcca9e");
