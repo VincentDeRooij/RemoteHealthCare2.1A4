@@ -124,6 +124,17 @@ namespace RHCServer
                     }
                 break;
 
+                case "session/stop":
+                    {
+                        string authkey = (string)args.Data.Key;
+                        IConnection clientConnection = authkeys.Where(x => x.Item2 == authkey).FirstOrDefault()?.Item1;
+                        clientConnection.Write(new
+                        {
+                            Command = "session/stop"
+                        }); ;
+                    }
+                    break;
+
                 case "session/done":
                     {
                         Session session = SessionStorage.Instance.RetrieveSession((string)args.Data.SessionId);

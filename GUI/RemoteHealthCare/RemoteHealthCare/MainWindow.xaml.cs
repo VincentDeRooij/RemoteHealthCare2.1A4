@@ -149,6 +149,15 @@ namespace RemoteHealthCare
                     }
                 break;
 
+                case "session/stop":
+                    {
+                        sessionRunning = false;
+                        bike.ChangeBikeResistance(0);
+                        MessageBox.Show("SESSION STOPPED!");
+                        
+                    }
+                    break;
+
                 case "chat/send":
                     {
                         string message = (string)args.data;
@@ -362,11 +371,11 @@ namespace RemoteHealthCare
                             SessionId = activeSession.SessionId,
                             BikeData = new
                             {
-                                Distance = bike.Distance,
-                                RPM = bike.CurrentRPM,
-                                Speed = bike.CurrentSpeed,
-                                AvgSpeed = bike.AverageSpeed,
-                                Resistance = bike.resistance,
+                                Distance = bike.Distance, 
+                                RPM = bike.CurrentRPM, 
+                                Speed = bike.CurrentSpeed, 
+                                AvgSpeed = bike.AverageSpeed, 
+                                Resistance = bike.resistance, 
                                 Workload = bike.Workload,
 #if !SIM
                                 HR = hrMonitor.HeartRate

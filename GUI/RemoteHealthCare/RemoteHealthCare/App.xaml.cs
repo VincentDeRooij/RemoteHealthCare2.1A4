@@ -16,7 +16,6 @@ using System.Net;
 
 namespace RemoteHealthCare
 {
-
     /// <summary>w
     /// Interaction logic for App.xaml
     /// </summary>
@@ -33,7 +32,6 @@ namespace RemoteHealthCare
         public static ArrayList chatList = new ArrayList();
         public static Stopwatch stopwatch = new Stopwatch();
         public static Panel panel { get; set; }
-
 
         public static TcpClientWrapper serverClientWrapper;
 
@@ -70,7 +68,7 @@ namespace RemoteHealthCare
 
                 new Thread(() =>
                 {
-                    string command = string.Format(@"C:\Users\brand\Downloads\NetworkEngine.18.10.10.1\NetworkEngine\");
+                    string command = string.Format(@"C:\Users\finni\OneDrive\Documenten\Studie Avans - TI\Avans Jaar 2\Projecten\Periode 2.1\Remote Healthcare\VR\NetworkEngine\");
                     Process process = new Process();
                     process.StartInfo.WorkingDirectory = command;
                     process.StartInfo.FileName = "sim.bat";
@@ -115,7 +113,7 @@ namespace RemoteHealthCare
                     chooseAction(input);
                 }
             });
-            //vrThread.Start();
+            vrThread.Start();
         }
 
         static void ListenThread(NetworkStream stream)
@@ -1169,7 +1167,6 @@ namespace RemoteHealthCare
 
         public static void drawPanel()
         {
-
             App.sendAction(App.encapsulatePacket(EngineInteraction.swapPanel(nodeID)));
             //Background
             App.sendAction(App.encapsulatePacket(EngineInteraction.clearPanel(nodeID)));

@@ -28,16 +28,17 @@
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="66.354" />
+                <ColumnDefinition Width="153.646"/>
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <lvc:AngularGauge x:Name="meterRpm" Margin="10" FromValue="0" ToValue="130" 
+            <lvc:AngularGauge x:Name="meterRpm" Margin="10,64,10,65" FromValue="0" ToValue="130" 
                           LabelsStep="50" TicksStep="25" Wedge="300"
                           TicksForeground="White" Foreground="White" 
                           FontWeight="Bold" FontSize="16"
                           Width="200" Height="200"
-                          SectionsInnerRadius=".5">
+                          SectionsInnerRadius=".5" Grid.ColumnSpan="2">
                 <lvc:AngularGauge.Sections>
                     <lvc:AngularSection FromValue="0" ToValue="40" Fill="Orange"/>
                     <lvc:AngularSection FromValue="41" ToValue="80" Fill="Green"/>
@@ -45,7 +46,7 @@
                 </lvc:AngularGauge.Sections>
             </lvc:AngularGauge>
 
-            <lvc:CartesianChart Series="{Binding SeriesCollection}" LegendLocation="Right" Grid.Column="1" ScrollMode="Y">
+            <lvc:CartesianChart Series="{Binding SeriesCollection}" LegendLocation="Right" Grid.Column="2" ScrollMode="Y">
                 <lvc:CartesianChart.AxisY>
                     <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter}"></lvc:Axis>
                 </lvc:CartesianChart.AxisY>
